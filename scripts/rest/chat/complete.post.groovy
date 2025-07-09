@@ -14,53 +14,52 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
+import org.springframework.ai.chat.client.advisor.api.Advisor
+import org.springframework.ai.chat.client.advisor.api.AdvisorContext
+import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
+import org.springframework.ai.chat.client.advisor.api.ChatClientAdvisor
+import org.springframework.stereotype.Component
 
 
-class ChatClientConfig {
-    @Value('${spring.ai.openai.api-key}')
-    String openAiApiKey
+def apiKey = System.getenv("crafter_chatgpt")
 
-    ChatClient chatClient(ChatClient.Builder chatClientBuilder, ToolCallbackProvider toolCallbackProvider) {
-        chatClientBuilder
-            .defaultToolCallbacks([toolCallbackProvider])
-            .build()
-    }
+def query = params.question
 
-    OpenAiChatModel chatModel() {
-        new OpenAiChatModel(
-            openAiApiKey,
-            OpenAiChatOptions.builder()
-                .withModel('gpt-4o-mini')
-                .build()
-        )
-    }
-
-    McpSyncClientCustomizer mcpClientCustomizer() {
-        new McpSyncClientCustomizer() {
-            @Override
-            void customize(String serverConfigurationName, McpClient.SyncSpec spec) {
-                spec.requestTimeout(Duration.ofSeconds(30))
-            }
-        }
-    }
+if(!query) {
+    return "Error: 'question' field is required"
 }
 
-class ChatController {
-    final ChatClient chatClient
+def toolCallbackProvider = new ToolCallbackProvider()
+def chatModel = OpenAiChatModel(apiKey, OpenAiChatOptions.builder().withModel('gpt-4o-mini').build())
 
-    ChatController(ChatClient chatClient) {
-        this.chatClient = chatClient
-    }
+def chatClient = chatClientBuilder.defaultToolCallbacks([toolCallbackProvider]).build()
 
-    @PostMapping('/chat')
-    String chat(@RequestBody Map<String, String> request) {
-        def query = request.get('question')
-        if (!query) {
-            return "Error: 'question' field is required"
-        }
-        chatClient.prompt()
-            .user(query)
-            .call()
-            .content()
+chatClient.prompt().user(query).call().content()
+            
+
+
+class ToolCallbackProvider implements ChatClientAdvisor {
+    AdvisorResponse advise(AdvisorContext context, Advisor chain) {
+        def tools = [
+            [
+                type: 'function',
+                function: [
+                    name: 'get_weather',
+                    description: 'Get the current weather for a location',
+                    parameters: [
+                        type: 'object',
+                        properties: [
+                            location: [
+                                type: 'string',
+                                description: 'The city and state, e.g., New York, NY'
+                            ]
+                        ],
+                        required: ['location']
+                    ]
+                ]
+            ]
+        ]
+        context.chatClient().prompt().tools(tools)
+        chain.advise(context)
     }
 }
