@@ -68,7 +68,7 @@
 				</widget>
 				<widget id="craftercms.components.PathNavigatorTree">
 					<configuration>
-						<label>Scripts</label>
+						<label>Scripts</label>  
 						<icon id="@mui/icons-material/CodeRounded"/>
 						<rootPath>/scripts</rootPath>
 						<locale>en</locale>
