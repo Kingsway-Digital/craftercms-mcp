@@ -2,7 +2,7 @@ package foo
 
 public class WeatherService {
     
-    def getHighTodaysHighTemp(city) {
+    def getTodaysHighTemp(city) {
         return 40
     }
 }
