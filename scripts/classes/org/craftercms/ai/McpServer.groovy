@@ -1,3 +1,14 @@
+package org.craftercms.ai
+
+@GrabResolver(name='spring-milestones', root='https://repo.spring.io/milestone')
+@Grab('org.apache.groovy:groovy:4.0.23')
+@Grab('org.slf4j:slf4j-api:2.0.16')
+@Grab('ch.qos.logback:logback-classic:1.5.8')
+@Grab('jakarta.servlet:jakarta.servlet-api:6.0.0')
+@Grab('com.fasterxml.jackson.core:jackson-databind:2.18.0')
+@Grab('org.springframework.experimental:mcp-webmvc-sse-transport:0.9.0')
+@Grab('org.springframework:spring-webmvc:6.1.14')
+
 import groovy.util.logging.Slf4j
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
