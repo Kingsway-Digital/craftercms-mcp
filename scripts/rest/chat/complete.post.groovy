@@ -1,7 +1,8 @@
 @GrabResolver(name='spring-milestones', root='https://repo.spring.io/milestone', m2Compatible=true)
 @GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
 
-@Grab('org.springframework.ai:spring-ai-core:1.0.0-M1')
+@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-M6')
+
 
 
 // @Grab('org.springframework.boot:spring-boot-starter-web:3.2.5')
