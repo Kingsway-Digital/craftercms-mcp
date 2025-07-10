@@ -7,6 +7,11 @@
 
 import groovy.json.JsonSlurper
 
+import org.springframework.http.HttpHeaders
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClient.Builder
+import org.springframework.web.reactive.function.client.WebClient
+
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 //import org.springframework.ai.mcp.client.McpClient
@@ -17,6 +22,7 @@ import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
 import org.springframework.ai.chat.client.advisor.api.Advisor
 import org.springframework.ai.tool.StaticToolCallbackProvider       
        
+    
 
 def apiKey = System.getenv("crafter_chatgpt")
 
@@ -28,10 +34,20 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
+
+
+def restClientBuilder = RestClient.builder()
+restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
+
+def openAiApi = new OpenAiApi("https://api.openai.com", openAIKey, restClientBuilder, webClientBuilder)
+
 def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build() 
 
 // Define OpenAiChatModel
-def chatModel = new OpenAiChatModel( apiKey, openAiChatOptions )
+
+
+
+( apiKey, openAiChatOptions )
 
 // Define McpClient
 def sseConnections = [
