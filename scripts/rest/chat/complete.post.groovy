@@ -3,6 +3,7 @@
 @GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
 @Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-M6', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-M6', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-M7', initClass=false)
 
 
 // @Grab('org.springframework.boot:spring-boot-starter-web:3.2.5')
@@ -17,7 +18,6 @@
 
 // @Grab(group='org.springframework.experimental', module='mcp-webmvc-sse-transport', version='0.6.0', initClass=false)
 // @Grab(group='org.springframework.experimental', module='mcp-webflux-sse-transport', version='0.6.0', initClass=false)
-// @Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-M7', initClass=false)
 // @Grab(group='org.springframework', module='spring-webmvc', version='6.1.14', initClass=false)
 // @Grab(group='org.springframework', module='spring-context', version='6.1.14', initClass=false)
 // @Grab(group='jakarta.servlet', module='jakarta.servlet-api', version='5.0.0', initClass=false)
