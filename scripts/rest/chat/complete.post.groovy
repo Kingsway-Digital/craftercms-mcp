@@ -28,19 +28,8 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
-return [ response: "test" ]
-/*
-
 // Define OpenAiChatModel
 def chatModel = new OpenAiChatModel( apiKey, OpenAiChatOptions.builder().withModel('gpt-4o-mini').build() )
-
-// // Define McpSyncClientCustomizer
-// def mcpClientCustomizer = new McpSyncClientCustomizer() {
-//     void customize(String serverConfigurationName, McpClient.SyncSpec spec) {
-//         spec.requestTimeout(Duration.ofSeconds(30))
-//         spec.headers(['Content-Type': 'text/event-stream'])
-//     }
-// }
 
 // Define McpClient
 def sseConnections = [
@@ -49,6 +38,7 @@ def sseConnections = [
     ]
 ]
 
+/*
 def mcpClient = new McpClient( toolCallbackEnabled: true, sseConnections: sseConnections )
 
 // Define ToolCallbackProvider
@@ -59,7 +49,10 @@ def chatClientBuilder = ChatClient.builder(chatModel)
 
 def chatClient = chatClientBuilder.defaultToolCallbacks([toolCallbackProvider]).build()
 
-return chatClient.prompt().user(query).call().content()
+def clientResponse = chatClient.prompt().user(query).call().content()
+*/
+
+return [ response: "test" ]
 
 
 class ToolCallbackProvider implements ChatClientAdvisor {
