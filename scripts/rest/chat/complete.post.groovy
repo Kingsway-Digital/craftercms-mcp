@@ -17,7 +17,6 @@ import org.springframework.ai.chat.client.ChatClient
 // import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
 // import org.springframework.ai.chat.client.advisor.api.ChatClientAdvisor
 
-/*
 def apiKey = System.getenv("crafter_chatgpt")
 
 def query = params.question
@@ -25,6 +24,8 @@ def query = params.question
 if(!query) {
     return "Error: 'question' field is required"
 }
+
+/*
 
 // Define OpenAiChatModel
 def chatModel = new OpenAiChatModel( apiKey, OpenAiChatOptions.builder().withModel('gpt-4o-mini').build() )
