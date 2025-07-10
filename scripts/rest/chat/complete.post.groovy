@@ -50,13 +50,13 @@ try {
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def clientInfo = new McpSchema.Implementation("mcp-client", "1.0.0")
     def clientCapabilities = McpSchema.ClientCapabilities.builder()
-        .tools(true)
         .resources(true)
         .prompts(true)
         .roots(true)
         .sampling()
         .build()
-        
+        //        .tools(true)
+
     def roots = [:] // Empty map; add roots if needed, e.g., ["file:///path": new Root("file:///path", "Local files")]
     
     def toolsChangeConsumers = [
