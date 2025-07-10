@@ -16,12 +16,12 @@ import jakarta.servlet.http.HttpServletResponse
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.experimental.mcp.webmvc.McpWebMvcSseTransportProvider
 
-private final McpHandler mcpHandler = new McpHandler()
-private final ObjectMapper objectMapper = new ObjectMapper()
-private final McpWebMvcSseTransportProvider sseTransportProvider = new McpWebMvcSseTransportProvider()
 
 public class McpServer {
-    
+    private final McpHandler mcpHandler = new McpHandler()
+    private final ObjectMapper objectMapper = new ObjectMapper()
+    private final McpWebMvcSseTransportProvider sseTransportProvider = new McpWebMvcSseTransportProvider()
+
     public void doPost(HttpServletRequest req, HttpServletResponse resp) {
         resp.setContentType("application/json")
         resp.setCharacterEncoding("UTF-8")
