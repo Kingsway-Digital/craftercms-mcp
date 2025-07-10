@@ -28,7 +28,7 @@ try {
     // Initialize OpenAI ChatClient
     def apiKey = System.getenv("crafter_chatgpt")
     def openAiApi = new OpenAiApi("https://api.openai.com", apiKey)
-    def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build()
+    def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
     def chatClient = ChatClient.builder(chatModel).build()
 
