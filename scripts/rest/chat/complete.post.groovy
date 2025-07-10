@@ -37,7 +37,8 @@ try {
 
  
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
-    def mcpServerUrl = "http://localhost:8080/mcp"
+    def mcpPreviewToken = "this may get difficult" 
+    def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
     asyncClient = new McpAsyncClient(transport)
     asyncClient.initialize()
