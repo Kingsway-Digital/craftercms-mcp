@@ -44,7 +44,41 @@ try {
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
     def chatClient = ChatClient.builder(chatModel).build()
 
- 
+
+    asyncClient = initializeMcpClient(logger)
+
+    try {
+        // Log available tools
+        def tools = asyncClient.listTools().get()
+        logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
+    
+        // Process prompt
+        def response
+        if (query.toLowerCase().startsWith("weather")) {
+            def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
+            def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
+            def toolResult = asyncClient.callToolAsync(toolRequest).get()
+            response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
+        } else {
+            response = "Non-weather prompts not supported"
+        }
+    }
+    catch(err) {
+        logger.error("MCP Client error " + err)
+    }
+
+    def chatResponse = chatClient.prompt().user(query).call().content()
+
+    return [response: chatResponse]
+} catch (Exception e) {
+    logger.error("Error: ${e.message}", e)
+    return [error: e.message]
+} finally {
+    asyncClient?.close()
+}
+
+
+def initializeMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
     def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
@@ -95,27 +129,5 @@ try {
     asyncClient = new McpAsyncClient(transport, Duration.ofSeconds(10), Duration.ofSeconds(10), mcpFeatures)
     asyncClient.initialize()
 
-    // Log available tools
-    def tools = asyncClient.listTools().get()
-    logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
-
-    // Process prompt
-    def response
-    if (query.toLowerCase().startsWith("weather")) {
-        def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
-        def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
-        def toolResult = asyncClient.callToolAsync(toolRequest).get()
-        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
-    } else {
-        response = "Non-weather prompts not supported"
-    }
-
-    def chatResponse = chatClient.prompt().user(query).call().content()
-
-    return [response: chatResponse]
-} catch (Exception e) {
-    logger.error("Error: ${e.message}", e)
-    return [error: e.message]
-} finally {
-    asyncClient?.close()
+    return asyncClient
 }
