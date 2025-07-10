@@ -16,6 +16,11 @@ import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClient.Builder
 import org.springframework.web.reactive.function.client.WebClient
 
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
@@ -37,6 +42,8 @@ import io.modelcontextprotocol.spec.McpSchema
 import io.modelcontextprotocol.schema.*
 import reactor.core.publisher.Mono
 import java.util.function.Function
+
+import com.fasterxml.jackson.databind.ObjectMapper
 
 def jsonSlurper = new JsonSlurper()
 def query = jsonSlurper.parseText(request.reader.text).message
@@ -138,9 +145,20 @@ def buildMcpClient(logger) {
         loggingConsumers,
         samplingHandler
     )
-				
-    def transport = new HttpClientSseClientTransport(mcpServerUrl)
-    
+
+    // externalize these. site names can change. this token only works on my local instance
+    def siteId = "mcp"
+    def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
+
+    def httpClient = HttpClient.newBuilder()
+    def requestBuilder = HttpRequest.newBuilder()
+    def objMapper = new ObjectMapper()
+    def sseEndpoint = "/api/craftermcp/sse.json"
+    requestBuilder.setHeader("X-Crafter-Site", siteId)
+    requestBuilder.setHeader("X-Crafter-Preview", previewToken)
+
+    def transport = new HttpClientSseClientTransport(httpClient, requestBuilder, mcpServerUrl, sseEndpoint, objMapper) 
+
     asyncClient = new McpAsyncClient(transport, Duration.ofSeconds(10), Duration.ofSeconds(10), mcpFeatures)
 
     return asyncClient
