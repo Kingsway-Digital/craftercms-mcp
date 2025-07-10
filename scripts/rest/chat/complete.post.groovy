@@ -54,6 +54,6 @@ try {
 
     return [response: response]
 } catch (Exception e) {
-    log.error("Error: ${e.message}", e)
+    logger.error("Error: ${e.message}", e)
     return [error: e.message]
 }
