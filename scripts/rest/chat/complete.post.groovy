@@ -1,10 +1,11 @@
 @GrabResolver(name='spring-snapshot', root='https://repo.spring.io/snapshot', m2Compatible=true)
-@GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
+@GrabResolver(name='maven-central',   root='https://repo1.maven.org/maven2',  m2Compatible=true)
 
-@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-M6', initClass=false)
-@Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-M6', initClass=false)
-@Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0', initClass=false)
-@Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
+@Grab(group='org.springframework.ai',      module='spring-ai',        version='1.0.0-M6', initClass=false)
+@Grab(group='org.springframework.ai',      module='spring-ai-core',   version='1.0.0-M6', initClass=false)
+@Grab(group='org.springframework.ai',      module='spring-ai-openai', version='1.0.0-M6', initClass=false)
+@Grab(group='io.modelcontextprotocol.sdk', module='mcp',              version='0.10.0',   initClass=false)
+@Grab(group='com.fasterxml.jackson.core',  module='jackson-databind', version='2.17.2',   initClass=false)
 
 import java.time.Duration
 
