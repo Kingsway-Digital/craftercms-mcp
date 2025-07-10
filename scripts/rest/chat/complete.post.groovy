@@ -18,7 +18,13 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
+
+import org.springframework.ai.tool.ToolCallbackProvider   
+
 import org.springframework.ai.chat.client.ChatClient
+import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
+import org.springframework.ai.chat.client.advisor.api.Advisor
+
 import io.modelcontextprotocol.client.McpAsyncClient
 import io.modelcontextprotocol.client.McpClientFeatures
 
@@ -52,7 +58,9 @@ try {
 
     def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
-    def chatClient = ChatClient.builder(chatModel).build()
+    
+    def toolCallbackProvider = new McpToolCallbackProvider()
+    def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks([toolCallbackProvider]).build()
 
 
 
@@ -91,6 +99,33 @@ try {
     asyncClient?.close()
 }
 
+
+class McpToolCallbackProvider implements ToolCallbackProvider {
+
+    AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
+        def tools = [
+            [
+                type: 'function',
+                function: [
+                    name: 'get_weather',
+                    description: 'Get the current weather for a location',
+                    parameters: [
+                        type: 'object',
+                        properties: [
+                            location: [
+                                type: 'string',
+                                description: 'The city and state, e.g., New York, NY'
+                            ]
+                        ],
+                        required: ['location']
+                    ]
+                ]
+            ]
+        ]
+        context.chatClient().prompt().tools(tools)
+        chain.advise(context)
+    }
+}
 
 def initializeMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
