@@ -49,29 +49,29 @@ if (!query) {
 def asyncClient
 
 //try {
-
-try {
+//try {
     // all this stuff gets moved inside an advisor
-    asyncClient = initializeMcpClient(logger)
+    asyncClient = buildMcpClient(logger)
+     asyncClient.initialize()
 
-    // Log available tools
-    def tools = asyncClient.listTools().get()
-    logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
+//     // Log available tools
+//     def tools = asyncClient.listTools().get()
+//     logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
-    // Process prompt
-    def response
-    if (query.toLowerCase().startsWith("weather")) {
-        def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
-        def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
-        def toolResult = asyncClient.callToolAsync(toolRequest).get()
-        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
-    } else {
-        response = "Non-weather prompts not supported"
-    }
-}
-catch(err) {
-    logger.error("MCP Client error " + err)
-}
+//     // Process prompt
+//     def response
+//     if (query.toLowerCase().startsWith("weather")) {
+//         def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
+//         def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
+//         def toolResult = asyncClient.callToolAsync(toolRequest).get()
+//         response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
+//     } else {
+//         response = "Non-weather prompts not supported"
+//     }
+// }
+// catch(err) {
+//     logger.error("MCP Client error " + err)
+// }
 
 // Initialize OpenAI ChatClient
 def apiKey = System.getenv("crafter_chatgpt")
@@ -95,7 +95,7 @@ return [response: chatResponse]
     
     
 
-def initializeMcpClient(logger) {
+def buildMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
     def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
@@ -142,7 +142,6 @@ def initializeMcpClient(logger) {
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
     
     asyncClient = new McpAsyncClient(transport, Duration.ofSeconds(10), Duration.ofSeconds(10), mcpFeatures)
-    asyncClient.initialize()
 
     return asyncClient
 }
