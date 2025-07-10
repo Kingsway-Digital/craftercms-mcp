@@ -15,7 +15,7 @@
 @Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
 @Grab(group='org.slf4j', module='slf4j-api', version='2.0.16', initClass=false)
 @Grab(group='org.slf4j', module='slf4j-simple', version='2.0.16', initClass=false)
-@Grab(group='org.codehaus.groovy', module='groovy-all', version='3.0.22', initClass=false)
+
 // @GrabResolver(name='spring-milestones', root='https://repo.spring.io/milestone', m2Compatible=true)
 // @GrabResolver(name='spring-milestones', root='https://repo.spring.io/libs-milestone-local', m2Compatible=true)
 // @GrabResolver(name='spring-snapshots', root='https://repo.spring.io/snapshot')
