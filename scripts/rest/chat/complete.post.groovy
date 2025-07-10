@@ -5,6 +5,7 @@
 @Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-SNAPSHOT', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.0.0-SNAPSHOT', initClass=false)
 
+import groovy.json.JsonSlurper
 
 
 import org.springframework.ai.openai.OpenAiChatModel
@@ -19,7 +20,9 @@ import org.springframework.ai.chat.client.ChatClient
 
 def apiKey = System.getenv("crafter_chatgpt")
 
-def query = params.message
+def jsonSlurper = new JsonSlurper()
+def requestBody = request.reader.text  
+def query = jsonSlurper.parseText(requestBody).message
 
 if(!query) {
     return "Error: 'question' field is required"
