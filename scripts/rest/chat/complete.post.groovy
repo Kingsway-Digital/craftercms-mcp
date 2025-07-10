@@ -20,6 +20,7 @@ import io.modelcontextprotocol.client.McpClientFeatures
 //import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
+import io.modelcontextprotocol.spec.McpSchema
 import io.modelcontextprotocol.schema.*
 import reactor.core.publisher.Mono
 import java.util.function.Function
