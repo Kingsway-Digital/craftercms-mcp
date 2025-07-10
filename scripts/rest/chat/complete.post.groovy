@@ -61,7 +61,7 @@ try {
 
     def roots = [:] // Empty map; add roots if needed, e.g., ["file:///path": new Root("file:///path", "Local files")]
     
-    def toolsChangeConsumers =  = null // [
+    def toolsChangeConsumers = null // [
 //        { tools -> logger.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
   //  ]
     
