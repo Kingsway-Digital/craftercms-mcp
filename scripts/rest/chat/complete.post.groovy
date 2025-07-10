@@ -45,9 +45,11 @@ try {
     def chatClient = ChatClient.builder(chatModel).build()
 
 
-    asyncClient = initializeMcpClient(logger)
 
     try {
+        // all this stuff gets moved inside an advisor
+        asyncClient = initializeMcpClient(logger)
+
         // Log available tools
         def tools = asyncClient.listTools().get()
         logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
@@ -68,8 +70,10 @@ try {
     }
 
     def chatResponse = chatClient.prompt().user(query).call().content()
-
     return [response: chatResponse]
+    
+    
+    
 } catch (Exception e) {
     logger.error("Error: ${e.message}", e)
     return [error: e.message]
