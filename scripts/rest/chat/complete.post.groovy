@@ -15,7 +15,7 @@ import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
 import io.modelcontextprotocol.client.McpClient
-import io.modelcontextprotocol.client.Client
+//import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.sdk.client.stdio.StdioClientTransport
 
 @Slf4j
