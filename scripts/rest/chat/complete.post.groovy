@@ -15,10 +15,14 @@ import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
 import io.modelcontextprotocol.client.McpAsyncClient
+import io.modelcontextprotocol.client.McpClientFeatures
 
 //import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
+import io.modelcontextprotocol.schema.*
+import reactor.core.publisher.Mono
+import java.util.function.Function
 
 def jsonSlurper = new JsonSlurper()
 def query = jsonSlurper.parseText(request.reader.text).message
@@ -43,8 +47,48 @@ try {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
     def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
+    def clientInfo = new Implementation("mcp-client", "1.0.0")
+    def clientCapabilities = ClientCapabilities.builder()
+        .tools(true)
+        .resources(true)
+        .prompts(true)
+        .roots(true)
+        .sampling()
+        .build()
+    def roots = [:] // Empty map; add roots if needed, e.g., ["file:///path": new Root("file:///path", "Local files")]
+    
+    def toolsChangeConsumers = [
+        { tools -> log.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
+    ]
+    
+    def resourcesChangeConsumers = [
+        { resources -> log.info("Resources updated: ${resources.collect { it.name }}"); Mono.empty() } as Function
+    ]
+    
+    def promptsChangeConsumers = [
+        { prompts -> log.info("Prompts updated: ${prompts.collect { it.name }}"); Mono.empty() } as Function
+    ]
+    
+    def loggingConsumers = [
+        { logMsg -> log.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
+    ]
+    
+    def samplingHandler = { req -> Mono.just(new CreateMessageResult("Sample response")) } as Function
+
+    def mcpFeatures = new McpClientFeatures.Async(
+        clientInfo,
+        clientCapabilities,
+        roots,
+        toolsChangeConsumers,
+        resourcesChangeConsumers,
+        promptsChangeConsumers,
+        loggingConsumers,
+        samplingHandler
+    )
+				
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
-    asyncClient = new McpAsyncClient(transport, Duration.withSeconds(10L), Duration.withSeconds(10L))
+    
+    asyncClient = new McpAsyncClient(transport, Duration.withSeconds(10L), Duration.withSeconds(10L), mcpFeatures)
     asyncClient.initialize()
 
     // Log available tools
