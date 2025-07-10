@@ -51,19 +51,24 @@ def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 
 chatClient = new DefaultChatClientBuilder(chatModel).build() 
 
+// Define McpClient
+def mcpServerUrl = = "http://localhost:3000/mcp"
+def transportConfig = [:]
+    transportConfig.url = mcpServerUrl
+
+def transport = new HttpClientTransport(transportConfig)
+def clientConfig = [:]
+clientConfig.put("name", "mcp-client")
+clientConfig.put("version", "1.0.0")
+mcpClient = new McpClient(clientConfig;
+mcpClient.connect(transport)
+mcpClient.initialize()
+
 def clientResponse = chatClient.prompt().user(query).call().content()
 
 return [ response: clientResponse ]
 
 
-// ( apiKey, openAiChatOptions )
-
-// // Define McpClient
-// def sseConnections = [
-//     'mcp-server': [
-//         url: 'http://localhost:8080'
-//     ]
-// ]
 
 /*StaticToolCallbackProvider
 def mcpClient = new McpClient( toolCallbackEnabled: true, sseConnections: sseConnections )
