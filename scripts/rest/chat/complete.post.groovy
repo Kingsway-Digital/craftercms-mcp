@@ -28,7 +28,7 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
-def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build() 
+def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build() 
 
 // Define OpenAiChatModel
 def chatModel = new OpenAiChatModel( apiKey, openAiChatOptions )
