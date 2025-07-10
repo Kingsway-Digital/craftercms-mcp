@@ -16,6 +16,8 @@ import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 //import org.springframework.ai.mcp.client.McpClient
 
+import org.springframework.ai.openai.api.OpenAiApi
+
 import org.springframework.ai.chat.client.ChatClient
 // import org.springframework.ai.chat.client.advisor.api.AdvisorContext
 import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
