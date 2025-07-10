@@ -14,7 +14,6 @@
 @Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
 @Grab(group='org.slf4j', module='slf4j-api', version='2.0.16', initClass=false)
 @Grab(group='org.slf4j', module='slf4j-simple', version='2.0.16', initClass=false)
-@Grab(group='org.codehaus.groovy', module='groovy-all', version='3.0.22', initClass=false)
 
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.openai.OpenAiChatModel
