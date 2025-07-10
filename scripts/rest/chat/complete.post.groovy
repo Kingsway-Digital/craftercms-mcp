@@ -53,32 +53,8 @@ if (!query) {
     return [error: "Message field is required"]
 }
 
-def asyncClient
-
-//try {
-//try {
-    // all this stuff gets moved inside an advisor
-    asyncClient = buildMcpClient(logger)
-     asyncClient.initialize()
-
-//     // Log available tools
-//     def tools = asyncClient.listTools().get()
-//     logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
-
-//     // Process prompt
-//     def response
-//     if (query.toLowerCase().startsWith("weather")) {
-//         def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
-//         def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
-//         def toolResult = asyncClient.callToolAsync(toolRequest).get()
-//         response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
-//     } else {
-//         response = "Non-weather prompts not supported"
-//     }
-// }
-// catch(err) {
-//     logger.error("MCP Client error " + err)
-// }
+def asyncClient = buildMcpClient(logger)
+asyncClient.initialize()
 
 // Initialize OpenAI ChatClient
 def apiKey = System.getenv("crafter_chatgpt")
