@@ -76,11 +76,7 @@ try {
     def loggingConsumers  = null //= [
       //  { logMsg -> logger.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
     //]
-
-
-Insecure call to 'method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object (complete_post$_run_closure1 apply null)' you can tweak the security sandbox to allow it. Read more about this in the documentation. 
-java.lang.UnsupportedOperationException: Insecure call to 'method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object (complete_post$_run_closure1 apply null)' you can tweak the security sandbox to allow it. Read more about this in the documentation.
-    
+ 
     def samplingHandler = { req ->   } as Function
     //{ req -> Mono.just(new McpSchema.CreateMessageResult("Sample response")) } as Function
 
