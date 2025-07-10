@@ -36,7 +36,7 @@ try {
     def chatClient = ChatClient.builder(chatModel).build()
 
     // Initialize McpClient with StdioClientTransport
-    def mcpClient = new Client([name: "mcp-client", version: "1.0.0"])
+    def mcpClient = new McpClient([name: "mcp-client", version: "1.0.0"])
     mcpClient.connect(new HttpClientSseClientTransport())
     mcpClient.initialize()
 
