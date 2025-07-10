@@ -88,7 +88,7 @@ def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 
 def toolCallbackProvider = new AsyncMcpToolCallbackProvider(asyncClient)
 
-def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks(toolCallbackProvider).build()
+def chatClient = ChatClient.builder(chatModel).defaultTools(toolCallbackProvider).build()
 
 def chatResponse = chatClient.prompt().user(query).call().content()
 return [response: chatResponse]
