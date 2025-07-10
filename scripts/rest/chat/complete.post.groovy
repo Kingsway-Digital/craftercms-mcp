@@ -55,22 +55,23 @@ try {
         .roots(true)
         .sampling()
         .build()
+        
     def roots = [:] // Empty map; add roots if needed, e.g., ["file:///path": new Root("file:///path", "Local files")]
     
     def toolsChangeConsumers = [
-        { tools -> log.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
+        { tools -> logger.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
     ]
     
     def resourcesChangeConsumers = [
-        { resources -> log.info("Resources updated: ${resources.collect { it.name }}"); Mono.empty() } as Function
+        { resources -> logger.info("Resources updated: ${resources.collect { it.name }}"); Mono.empty() } as Function
     ]
     
     def promptsChangeConsumers = [
-        { prompts -> log.info("Prompts updated: ${prompts.collect { it.name }}"); Mono.empty() } as Function
+        { prompts -> logger.info("Prompts updated: ${prompts.collect { it.name }}"); Mono.empty() } as Function
     ]
     
     def loggingConsumers = [
-        { logMsg -> log.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
+        { logMsg -> logger.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
     ]
     
     def samplingHandler = { req -> Mono.just(new CreateMessageResult("Sample response")) } as Function
