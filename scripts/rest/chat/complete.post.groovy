@@ -52,7 +52,7 @@ def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 chatClient = new DefaultChatClientBuilder(chatModel).build() 
 
 // Define McpClient
-def mcpServerUrl = = "http://localhost:3000/mcp"
+def mcpServerUrl = "http://localhost:3000/mcp"
 def transportConfig = [:]
     transportConfig.url = mcpServerUrl
 
