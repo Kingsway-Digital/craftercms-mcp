@@ -92,7 +92,7 @@ try {
 				
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
     
-    asyncClient = new McpAsyncClient(transport, Duration.withSeconds(10L), Duration.withSeconds(10L), mcpFeatures)
+    asyncClient = new McpAsyncClient(transport, Duration.ofSeconds(10), Duration.ofSeconds(10), mcpFeatures)
     asyncClient.initialize()
 
     // Log available tools
