@@ -24,6 +24,8 @@ if (!query) {
     return [error: "Message field is required"]
 }
 
+def asyncClient
+
 try {
     // Initialize OpenAI ChatClient
     def apiKey = System.getenv("crafter_chatgpt")
@@ -36,7 +38,7 @@ try {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
     def mcpServerUrl = System.getenv("MCP_SERVER_URL") ?: "http://localhost:3000/mcp"
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
-    def asyncClient = new McpAsyncClient(transport)
+    asyncClient = new McpAsyncClient(transport)
     asyncClient.initialize()
 
     // Log available tools
