@@ -29,7 +29,7 @@ if (!query) {
 
 try {
     // Initialize OpenAI ChatClient
-    def apiKey = System.getenv("crafter_chatgpt") ?: throw new IllegalStateException("crafter_chatgpt not set")
+    def apiKey = System.getenv("crafter_chatgpt")
     def openAiApi = new OpenAiApi("https://api.openai.com", apiKey)
     def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
