@@ -5,6 +5,8 @@
 @Grab(group='org.springframework.ai', module='spring-ai-mcp',    version='1.0.0-M6', initClass=false)
 //@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.1.0-SNAPSHOT', initClass=false)
 
+@Grab(group='io.modelcontextprotocol', module='mcp-client', version='0.4.0', initClass=false)
+
 import groovy.json.JsonSlurper
 
 import org.springframework.http.HttpHeaders
@@ -24,7 +26,7 @@ import org.springframework.ai.chat.client.advisor.api.Advisor
 import org.springframework.ai.tool.StaticToolCallbackProvider       
 
 //import org.springframework.ai.mcp.client.McpClient
-  
+import io.modelcontextprotocol.client.McpClient
 
 def apiKey = System.getenv("crafter_chatgpt")
 
