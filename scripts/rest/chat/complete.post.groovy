@@ -3,7 +3,7 @@
 @GrabResolver(name='spring-milestones', root='https://repo.spring.io/libs-milestone-local', m2Compatible=true)
 @GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
 
-@Grab(group='org.springframework.experimental', module='mcp', version='0.9.0', initClass=false)
+@Grab(group='org.springframework.experimental', module='mcp', version='0.8.0', initClass=false)
 @Grab(group='org.springframework.experimental', module='mcp-webmvc-sse-transport', version='0.8.0', initClass=false)
 @Grab(group='org.springframework.experimental', module='mcp-webflux-sse-transport', version='0.8.0', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-M7', initClass=false)
