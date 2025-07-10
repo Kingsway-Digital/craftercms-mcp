@@ -101,28 +101,26 @@ def initializeMcpClient(logger) {
         .roots(true)
         .sampling()
         .build()
-//        .prompts(true)
-
-//        .resources(true)
-
-        //        .tools(true)
+     // .prompts(true)
+     // .resources(true)
+     // .tools(true)
 
     def roots = [:] // Empty map; add roots if needed, e.g., ["file:///path": new Root("file:///path", "Local files")]
     
     def toolsChangeConsumers = null // [
-//        { tools -> logger.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
-  //  ]
+    //    { tools -> logger.info("Tools updated: ${tools.collect { it.name }}"); Mono.empty() } as Function
+    //]
     
     def resourcesChangeConsumers  = null //= [
     //    { resources -> logger.info("Resources updated: ${resources.collect { it.name }}"); Mono.empty() } as Function
     //]
     
     def promptsChangeConsumers  = null //= [
-      //  { prompts -> logger.info("Prompts updated: ${prompts.collect { it.name }}"); Mono.empty() } as Function
+    //    { prompts -> logger.info("Prompts updated: ${prompts.collect { it.name }}"); Mono.empty() } as Function
     //]
     
     def loggingConsumers  = null //= [
-      //  { logMsg -> logger.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
+    //    { logMsg -> logger.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
     //]
  
     def samplingHandler = { req -> Mono.just(new McpSchema.CreateMessageResult("Sample response")) } as Function
