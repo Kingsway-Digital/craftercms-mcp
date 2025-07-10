@@ -5,10 +5,7 @@
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-M6', initClass=false)
 @Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0', initClass=false)
 @Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
-@Grab(group='org.slf4j', module='slf4j-api', version='2.0.16', initClass=false)
-@Grab(group='org.slf4j', module='slf4j-simple', version='2.0.16', initClass=false)
 
-import groovy.util.logging.Slf4j
 import groovy.json.JsonSlurper
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
@@ -18,7 +15,7 @@ import io.modelcontextprotocol.client.McpAsyncClient
 //import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
-@Slf4j
+
 def jsonSlurper = new JsonSlurper()
 def query = jsonSlurper.parseText(request.reader.text).message
 
