@@ -25,6 +25,7 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
+return [ response: "test" ]
 /*
 
 // Define OpenAiChatModel
