@@ -28,8 +28,10 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
+def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build() 
+
 // Define OpenAiChatModel
-def chatModel = new OpenAiChatModel( apiKey, OpenAiChatOptions.builder().withModel('gpt-4o-mini').build() )
+def chatModel = new OpenAiChatModel( apiKey, openAiChatOptions )
 
 // Define McpClient
 def sseConnections = [
@@ -38,7 +40,7 @@ def sseConnections = [
     ]
 ]
 
-/*
+/*StaticToolCallbackProvider
 def mcpClient = new McpClient( toolCallbackEnabled: true, sseConnections: sseConnections )
 
 // Define ToolCallbackProvider
