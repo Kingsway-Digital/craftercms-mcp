@@ -34,27 +34,31 @@ if(!query) {
     return "Error: 'question' field is required"
 }
 
-
-
+def webClientBuilder = WebClient.builder()
 def restClientBuilder = RestClient.builder()
 restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
 
 def openAiApi = new OpenAiApi("https://api.openai.com", openAIKey, restClientBuilder, webClientBuilder)
 
-def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build() 
+def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build() 
 
-// Define OpenAiChatModel
+def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
+
+chatClient = new DefaultChatClientBuilder(chatModel).build() 
+
+def clientResponse = chatClient.prompt().user(query).call().content()
+
+return [ response: clientResponse ]
 
 
+// ( apiKey, openAiChatOptions )
 
-( apiKey, openAiChatOptions )
-
-// Define McpClient
-def sseConnections = [
-    'mcp-server': [
-        url: 'http://localhost:8080'
-    ]
-]
+// // Define McpClient
+// def sseConnections = [
+//     'mcp-server': [
+//         url: 'http://localhost:8080'
+//     ]
+// ]
 
 /*StaticToolCallbackProvider
 def mcpClient = new McpClient( toolCallbackEnabled: true, sseConnections: sseConnections )
@@ -70,7 +74,6 @@ def chatClient = chatClientBuilder.defaultToolCallbacks([toolCallbackProvider]).
 def clientResponse = chatClient.prompt().user(query).call().content()
 */
 
-return [ response: "test" ]
 
 
 // class MyToolCallbackProvider implements ToolCallbackProvider {
