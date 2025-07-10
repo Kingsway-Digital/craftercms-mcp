@@ -96,7 +96,7 @@ try {
     asyncClient.initialize()
 
     // Log available tools
-    def tools = asyncClient.listToolsAsync().get()
+    def tools = asyncClient.listTools().get()
     logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
     // Process prompt
