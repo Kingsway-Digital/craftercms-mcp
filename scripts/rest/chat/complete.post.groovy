@@ -16,7 +16,7 @@ import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
 import io.modelcontextprotocol.client.McpClient
 //import io.modelcontextprotocol.client.Client
-import io.modelcontextprotocol.sdk.client.transport.HttpClientSseClientTransport
+import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
 @Slf4j
 def jsonSlurper = new JsonSlurper()
