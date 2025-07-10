@@ -1,12 +1,8 @@
 
-@GrabResolver(name='spring-milestones', root='https://repo.spring.io/milestone', m2Compatible=true)
-@GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
-@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-M6', initClass=false)
-@Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-M6', initClass=false)
-@Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-M6', initClass=false)
-
-
-
+@GrabResolver(name='custom', root='https://repo.spring.io/snapshot', m2Compatible='true')
+@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-SNAPSHOT', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-SNAPSHOT', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-SNAPSHOT', initClass=false)
 
 
 //@Grab(group='org.springframework.ai', module='spring-ai-starter-model-openai', version='1.0.0-M1', initClass=false)
