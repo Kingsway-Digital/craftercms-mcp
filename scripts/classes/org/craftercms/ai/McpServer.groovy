@@ -1,6 +1,6 @@
 package org.craftercms.ai
 
-@GrabResolver(name='spring-milestones', root='https://repo.spring.io/milestone')
+
 @Grab('org.apache.groovy:groovy:4.0.23')
 @Grab('org.slf4j:slf4j-api:2.0.16')
 @Grab('ch.qos.logback:logback-classic:1.5.8')
