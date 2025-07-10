@@ -1,120 +1,62 @@
-@GrabResolver(name='custom',        root='https://repo.spring.io/snapshot', m2Compatible='true')
-@GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2',  m2Compatible=true)
+@GrabResolver(name='spring-snapshot', root='https://repo.spring.io/snapshot', m2Compatible=true)
+@GrabResolver(name='maven-central', root='https://repo1.maven.org/maven2', m2Compatible=true)
 
-@Grab(group='org.springframework.ai', module='spring-ai-core',   version='1.0.0-M6', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-M6', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-M6', initClass=false)
-@Grab(group='org.springframework.ai', module='spring-ai-mcp',    version='1.0.0-M6', initClass=false)
-//@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.1.0-SNAPSHOT', initClass=false)
+@Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0', initClass=false)
+@Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
+@Grab(group='org.slf4j', module='slf4j-api', version='2.0.16', initClass=false)
+@Grab(group='org.slf4j', module='slf4j-simple', version='2.0.16', initClass=false)
 
-@Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0')
-
+import groovy.util.logging.Slf4j
 import groovy.json.JsonSlurper
-
-import org.springframework.http.HttpHeaders
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClient.Builder
-import org.springframework.web.reactive.function.client.WebClient
-
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
-
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.client.DefaultChatClientBuilder
-import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
-import org.springframework.ai.chat.client.advisor.api.Advisor
-
-
-
 import io.modelcontextprotocol.client.McpClient
 import io.modelcontextprotocol.client.Client
-import io.modelcontextprotocol.sdk.client.http.HttpClientTransport
+import io.modelcontextprotocol.sdk.client.stdio.StdioClientTransport
 
-import org.springframework.ai.tool.StaticToolCallbackProvider       
-
-//import org.springframework.ai.mcp.client.McpClient
-import io.modelcontextprotocol.client.McpClient
-
-def apiKey = System.getenv("crafter_chatgpt")
-
+@Slf4j
 def jsonSlurper = new JsonSlurper()
-def requestBody = request.reader.text  
-def query = jsonSlurper.parseText(requestBody).message
+def query = jsonSlurper.parseText(request.reader.text).message
 
-if(!query) {
-    return "Error: 'question' field is required"
+if (!query) {
+    log.error("Message field is missing")
+    return [error: "Message field is required"]
 }
 
-def webClientBuilder = WebClient.builder()
-def restClientBuilder = RestClient.builder()
-restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
+try {
+    // Initialize OpenAI ChatClient
+    def apiKey = System.getenv("crafter_chatgpt") ?: throw new IllegalStateException("crafter_chatgpt not set")
+    def openAiApi = new OpenAiApi("https://api.openai.com", apiKey)
+    def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build()
+    def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
+    def chatClient = ChatClient.builder(chatModel).build()
 
-def openAiApi = new OpenAiApi("https://api.openai.com", apiKey, restClientBuilder, webClientBuilder)
+    // Initialize McpClient with StdioClientTransport
+    def mcpClient = new Client([name: "mcp-client", version: "1.0.0"])
+    mcpClient.connect(new StdioClientTransport())
+    mcpClient.initialize()
 
-def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build() 
+    // Log available MCP tools
+    def tools = mcpClient.listTools()
+    log.info("Available MCP tools: ${tools.tools?.collect { it.name } ?: 'No tools found'}")
 
-def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
+    // Process prompt
+    def response
+    if (query.toLowerCase().startsWith("weather")) {
+        def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
+        def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
+        def toolResult = mcpClient.callTool(toolRequest)
+        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data available"
+    } else {
+        response = chatClient.prompt().user(query).call().content()
+    }
 
-chatClient = new DefaultChatClientBuilder(chatModel).build() 
-
-// Define McpClient
-def mcpServerUrl = "http://localhost:3000/mcp"
-def transportConfig = [:]
-    transportConfig.url = mcpServerUrl
-
-def transport = new HttpClientTransport(transportConfig)
-def clientConfig = [:]
-clientConfig.put("name", "mcp-client")
-clientConfig.put("version", "1.0.0")
-mcpClient = new Client(clientConfig)
-mcpClient.connect(transport)
-mcpClient.initialize()
-
-def clientResponse = chatClient.prompt().user(query).call().content()
-
-return [ response: clientResponse ]
-
-
-
-/*StaticToolCallbackProvider
-def mcpClient = new McpClient( toolCallbackEnabled: true, sseConnections: sseConnections )
-
-// Define ToolCallbackProvider
-def toolCallbackProvider = new ToolCallbackProvider()
-
-// Define ChatClient
-def chatClientBuilder = ChatClient.builder(chatModel)
-
-def chatClient = chatClientBuilder.defaultToolCallbacks([toolCallbackProvider]).build()
-
-def clientResponse = chatClient.prompt().user(query).call().content()
-*/
-
-
-
-// class MyToolCallbackProvider implements ToolCallbackProvider {
-
-//     AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
-//         def tools = [
-//             [
-//                 type: 'function',
-//                 function: [
-//                     name: 'get_weather',
-//                     description: 'Get the current weather for a location',
-//                     parameters: [
-//                         type: 'object',
-//                         properties: [
-//                             location: [
-//                                 type: 'string',
-//                                 description: 'The city and state, e.g., New York, NY'
-//                             ]
-//                         ],
-//                         required: ['location']
-//                     ]
-//                 ]
-//             ]
-//         ]
-//         context.chatClient().prompt().tools(tools)
-//         chain.advise(context)
-//     }
-// }
+    return [response: response]
+} catch (Exception e) {
+    log.error("Error: ${e.message}", e)
+    return [error: e.message]
+}
