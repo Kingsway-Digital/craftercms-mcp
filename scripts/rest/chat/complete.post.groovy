@@ -43,7 +43,7 @@ restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, de
 
 def openAiApi = new OpenAiApi("https://api.openai.com", apiKey, restClientBuilder, webClientBuilder)
 
-def openAiChatOptions = OpenAiChatOptions.builder().withModel("gpt-4o-mini").build() 
+def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build() 
 
 def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 
