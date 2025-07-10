@@ -40,13 +40,13 @@ if(!query) {
 // Define OpenAiChatModel
 def chatModel = new OpenAiChatModel( apiKey, OpenAiChatOptions.builder().withModel('gpt-4o-mini').build() )
 
-// Define McpSyncClientCustomizer
-def mcpClientCustomizer = new McpSyncClientCustomizer() {
-    void customize(String serverConfigurationName, McpClient.SyncSpec spec) {
-        spec.requestTimeout(Duration.ofSeconds(30))
-        spec.headers(['Content-Type': 'text/event-stream'])
-    }
-}
+// // Define McpSyncClientCustomizer
+// def mcpClientCustomizer = new McpSyncClientCustomizer() {
+//     void customize(String serverConfigurationName, McpClient.SyncSpec spec) {
+//         spec.requestTimeout(Duration.ofSeconds(30))
+//         spec.headers(['Content-Type': 'text/event-stream'])
+//     }
+// }
 
 // Define McpClient
 def sseConnections = [
