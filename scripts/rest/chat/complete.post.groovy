@@ -20,7 +20,7 @@ def jsonSlurper = new JsonSlurper()
 def query = jsonSlurper.parseText(request.reader.text).message
 
 if (!query) {
-    log.error("Message field is missing")
+    //log.error("Message field is missing")
     return [error: "Message field is required"]
 }
 
@@ -32,7 +32,7 @@ try {
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
     def chatClient = ChatClient.builder(chatModel).build()
 
-try {
+ 
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
     def mcpServerUrl = System.getenv("MCP_SERVER_URL") ?: "http://localhost:3000/mcp"
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
@@ -41,7 +41,7 @@ try {
 
     // Log available tools
     def tools = asyncClient.listToolsAsync().get()
-    log.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
+    //log.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
     // Process prompt
     def response
@@ -56,7 +56,7 @@ try {
 
     return [response: response]
 } catch (Exception e) {
-    log.error("Error: ${e.message}", e)
+    //log.error("Error: ${e.message}", e)
     return [error: e.message]
 } finally {
     asyncClient?.close()
