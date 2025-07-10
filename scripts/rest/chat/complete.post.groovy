@@ -16,7 +16,7 @@ import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
 import io.modelcontextprotocol.client.McpClient
 //import io.modelcontextprotocol.client.Client
-import io.modelcontextprotocol.sdk.client.stdio.StdioClientTransport
+import io.modelcontextprotocol.sdk.client.transport.HttpClientSseClientTransport
 
 @Slf4j
 def jsonSlurper = new JsonSlurper()
@@ -37,7 +37,7 @@ try {
 
     // Initialize McpClient with StdioClientTransport
     def mcpClient = new Client([name: "mcp-client", version: "1.0.0"])
-    mcpClient.connect(new StdioClientTransport())
+    mcpClient.connect(new HttpClientSseClientTransport())
     mcpClient.initialize()
 
     // Log available MCP tools
