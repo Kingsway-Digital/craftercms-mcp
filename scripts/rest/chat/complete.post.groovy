@@ -81,6 +81,3 @@ class ToolCallbackProvider implements ChatClientAdvisor {
         chain.advise(context)
     }
 }
-
-*/
- 
