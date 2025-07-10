@@ -15,7 +15,7 @@ import org.springframework.ai.chat.client.ChatClient
 // import org.springframework.ai.chat.client.advisor.api.AdvisorContext
 import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
 import org.springframework.ai.chat.client.advisor.api.Advisor
-       
+import org.springframework.ai.tool.StaticToolCallbackProvider       
        
 
 def apiKey = System.getenv("crafter_chatgpt")
@@ -55,29 +55,29 @@ def clientResponse = chatClient.prompt().user(query).call().content()
 return [ response: "test" ]
 
 
-class ToolCallbackProvider implements Advisor {
+// class MyToolCallbackProvider implements ToolCallbackProvider {
 
-    AdvisorResponse advise(AdvisorContext context, Advisor chain) {
-        def tools = [
-            [
-                type: 'function',
-                function: [
-                    name: 'get_weather',
-                    description: 'Get the current weather for a location',
-                    parameters: [
-                        type: 'object',
-                        properties: [
-                            location: [
-                                type: 'string',
-                                description: 'The city and state, e.g., New York, NY'
-                            ]
-                        ],
-                        required: ['location']
-                    ]
-                ]
-            ]
-        ]
-        context.chatClient().prompt().tools(tools)
-        chain.advise(context)
-    }
-}
+//     AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
+//         def tools = [
+//             [
+//                 type: 'function',
+//                 function: [
+//                     name: 'get_weather',
+//                     description: 'Get the current weather for a location',
+//                     parameters: [
+//                         type: 'object',
+//                         properties: [
+//                             location: [
+//                                 type: 'string',
+//                                 description: 'The city and state, e.g., New York, NY'
+//                             ]
+//                         ],
+//                         required: ['location']
+//                     ]
+//                 ]
+//             ]
+//         ]
+//         context.chatClient().prompt().tools(tools)
+//         chain.advise(context)
+//     }
+// }
