@@ -19,14 +19,11 @@ import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.mcp.client.McpClient
-//import org.springframework.ai.mcp.client.McpSyncClientCustomizer
-//import org.springframework.boot.web.servlet.ServletRegistrationBean
-//import org.springframework.context.support.GenericApplicationContext
-//import org.springframework.core.env.StandardEnvironment
-//import org.springframework.web.context.support.GenericWebApplicationContext
-//import org.springframework.web.servlet.DispatcherServlet
-//import org.springframework.web.servlet.mvc.method.RequestMappingInfo
-//import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+
+import org.springframework.ai.chat.client.advisor.api.Advisor
+import org.springframework.ai.chat.client.advisor.api.AdvisorContext
+import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
+import org.springframework.ai.chat.client.advisor.api.ChatClientAdvisor
 
 
 def apiKey = System.getenv("crafter_chatgpt")
@@ -68,6 +65,32 @@ def chatClient = chatClientBuilder.defaultToolCallbacks([toolCallbackProvider]).
 return chatClient.prompt().user(query).call().content()
 
 
+class ToolCallbackProvider implements ChatClientAdvisor {
+
+    AdvisorResponse advise(AdvisorContext context, Advisor chain) {
+        def tools = [
+            [
+                type: 'function',
+                function: [
+                    name: 'get_weather',
+                    description: 'Get the current weather for a location',
+                    parameters: [
+                        type: 'object',
+                        properties: [
+                            location: [
+                                type: 'string',
+                                description: 'The city and state, e.g., New York, NY'
+                            ]
+                        ],
+                        required: ['location']
+                    ]
+                ]
+            ]
+        ]
+        context.chatClient().prompt().tools(tools)
+        chain.advise(context)
+    }
+}
 
 
  
