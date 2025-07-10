@@ -14,7 +14,7 @@ import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
-import io.modelcontextprotocol.client.McpClient
+import io.modelcontextprotocol.client.McpAsyncClient
 //import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
@@ -36,7 +36,7 @@ try {
     def chatClient = ChatClient.builder(chatModel).build()
 
     // Initialize McpClient with StdioClientTransport
-    def mcpClient = new McpClient([name: "mcp-client", version: "1.0.0"])
+    def mcpClient = new McpAsyncClient([name: "mcp-client", version: "1.0.0"])
     mcpClient.connect(new HttpClientSseClientTransport())
     mcpClient.initialize()
 
