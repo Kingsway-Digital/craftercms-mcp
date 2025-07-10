@@ -15,7 +15,7 @@ import org.springframework.ai.chat.client.ChatClient
 // import org.springframework.ai.chat.client.advisor.api.Advisor
 // import org.springframework.ai.chat.client.advisor.api.AdvisorContext
 // import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
-import org.springframework.ai.chat.client.advisor.api.ChatModelCallAdvisor
+import org.springframework.ai.chat.client.advisor.api.Advisor
        
        
 
@@ -56,7 +56,7 @@ def clientResponse = chatClient.prompt().user(query).call().content()
 return [ response: "test" ]
 
 
-class ToolCallbackProvider implements ChatModelCallAdvisor {
+class ToolCallbackProvider implements Advisor {
 
     AdvisorResponse advise(AdvisorContext context, Advisor chain) {
         def tools = [
