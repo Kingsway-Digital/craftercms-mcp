@@ -60,7 +60,7 @@ def transport = new HttpClientTransport(transportConfig)
 def clientConfig = [:]
 clientConfig.put("name", "mcp-client")
 clientConfig.put("version", "1.0.0")
-mcpClient = new McpClient(clientConfig;
+mcpClient = new McpClient(clientConfig)
 mcpClient.connect(transport)
 mcpClient.initialize()
 
