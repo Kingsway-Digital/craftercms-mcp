@@ -19,7 +19,7 @@ import org.springframework.ai.chat.client.ChatClient
 
 def apiKey = System.getenv("crafter_chatgpt")
 
-def query = params.question
+def query = params.message
 
 if(!query) {
     return "Error: 'question' field is required"
