@@ -9,6 +9,7 @@
 	<internal-name>Home</internal-name>
 	<orderDefault_f>-1</orderDefault_f>
 	<body_html>
+	This project contains a custom service, MCP server and a chat/mcp client.
 	</body_html>
 	<objectGroupId>8d7f</objectGroupId>
 	<objectId>8d7f21fa-5e09-00aa-8340-853b7db302da</objectId>
@@ -17,6 +18,6 @@
 	<createdDate_dt>2017-01-31T16:18:14.000Z</createdDate_dt>
 	<lastModifiedDate>2021-06-03T11:29:49.000Z</lastModifiedDate>
 	<lastModifiedDate_dt>2021-06-03T11:29:49.000Z</lastModifiedDate_dt>
-	<title_t>MCP Labratory</title_t>
+	<title_t>MCP Laboratory</title_t>
 	<disabled>false</disabled>
 </page>   
