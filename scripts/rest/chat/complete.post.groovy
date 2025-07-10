@@ -42,7 +42,7 @@ def asyncClient
 
 try {
     // Initialize OpenAI ChatClient
-    def  = System.getenv("crafter_chatgpt")
+    def apiKey = System.getenv("crafter_chatgpt")
     
     def webClientBuilder = WebClient.builder()
     def restClientBuilder = RestClient.builder()
