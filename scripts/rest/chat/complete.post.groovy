@@ -10,6 +10,11 @@ import java.time.Duration
 
 import groovy.json.JsonSlurper
 
+import org.springframework.http.HttpHeaders
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClient.Builder
+import org.springframework.web.reactive.function.client.WebClient
+
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
@@ -39,7 +44,12 @@ try {
     // Initialize OpenAI ChatClient
     def apiKey = System.getenv("crafter_chatgpt")
     
-    def openAiApi = new OpenAiApi("https://api.openai.com", apiKey)
+    def webClientBuilder = WebClient.builder()
+    def restClientBuilder = RestClient.builder()
+    restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
+    
+    def openAiApi = new OpenAiApi("https://api.openai.com", openAIKey, restClientBuilder, webClientBuilder)
+
     def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
     def chatClient = ChatClient.builder(chatModel).build()
