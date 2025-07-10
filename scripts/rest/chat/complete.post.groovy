@@ -3,6 +3,7 @@
 @Grab(group='org.springframework.ai', module='spring-ai-core', version='1.0.0-SNAPSHOT', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0-SNAPSHOT', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-SNAPSHOT', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.0.0-SNAPSHOT', initClass=false)
 
 
 //@Grab(group='org.springframework.ai', module='spring-ai-starter-model-openai', version='1.0.0-M1', initClass=false)
