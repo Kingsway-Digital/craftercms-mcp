@@ -19,14 +19,14 @@ import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.mcp.client.McpClient
-import org.springframework.ai.mcp.client.McpSyncClientCustomizer
-import org.springframework.boot.web.servlet.ServletRegistrationBean
-import org.springframework.context.support.GenericApplicationContext
-import org.springframework.core.env.StandardEnvironment
-import org.springframework.web.context.support.GenericWebApplicationContext
-import org.springframework.web.servlet.DispatcherServlet
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+//import org.springframework.ai.mcp.client.McpSyncClientCustomizer
+//import org.springframework.boot.web.servlet.ServletRegistrationBean
+//import org.springframework.context.support.GenericApplicationContext
+//import org.springframework.core.env.StandardEnvironment
+//import org.springframework.web.context.support.GenericWebApplicationContext
+//import org.springframework.web.servlet.DispatcherServlet
+//import org.springframework.web.servlet.mvc.method.RequestMappingInfo
+//import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 
 
 def apiKey = System.getenv("crafter_chatgpt")
