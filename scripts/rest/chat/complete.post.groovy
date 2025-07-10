@@ -6,12 +6,16 @@
 @Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0', initClass=false)
 @Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
 
+import java.time.Duration
+
 import groovy.json.JsonSlurper
+
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.chat.client.ChatClient
 import io.modelcontextprotocol.client.McpAsyncClient
+
 //import io.modelcontextprotocol.client.Client
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 
@@ -40,7 +44,7 @@ try {
     def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
-    asyncClient = new McpAsyncClient(transport)
+    asyncClient = new McpAsyncClient(transport, new Duration(10000), new Duration(10000))
     asyncClient.initialize()
 
     // Log available tools
