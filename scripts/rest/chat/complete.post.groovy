@@ -7,6 +7,7 @@
 @Grab(group='io.modelcontextprotocol.sdk', module='mcp',              version='0.10.0',   initClass=false)
 @Grab(group='com.fasterxml.jackson.core',  module='jackson-databind', version='2.17.2',   initClass=false)
 
+
 import java.time.Duration
 
 import groovy.json.JsonSlurper
@@ -87,7 +88,7 @@ def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 
 def toolCallbackProvider = new AsyncMcpToolCallbackProvider(asyncClient)
 
-def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks([toolCallbackProvider]).build()
+def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks(toolCallbackProvider).build()
 
 def chatResponse = chatClient.prompt().user(query).call().content()
 return [response: chatResponse]
