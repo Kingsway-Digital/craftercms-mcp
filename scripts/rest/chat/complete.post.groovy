@@ -48,7 +48,7 @@ try {
     def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def clientInfo = new Implementation("mcp-client", "1.0.0")
-    def clientCapabilities = ClientCapabilities.builder()
+    def clientCapabilities = McpSchema.ClientCapabilities.builder()
         .tools(true)
         .resources(true)
         .prompts(true)
