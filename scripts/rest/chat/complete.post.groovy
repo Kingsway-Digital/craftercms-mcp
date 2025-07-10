@@ -20,7 +20,7 @@ def jsonSlurper = new JsonSlurper()
 def query = jsonSlurper.parseText(request.reader.text).message
 
 if (!query) {
-    //log.error("Message field is missing")
+    logger.error("Message field is missing")
     return [error: "Message field is required"]
 }
 
@@ -43,7 +43,7 @@ try {
 
     // Log available tools
     def tools = asyncClient.listToolsAsync().get()
-    //log.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
+    logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
     // Process prompt
     def response
@@ -58,7 +58,7 @@ try {
 
     return [response: response]
 } catch (Exception e) {
-    //log.error("Error: ${e.message}", e)
+    logger.error("Error: ${e.message}", e)
     return [error: e.message]
 } finally {
     asyncClient?.close()
