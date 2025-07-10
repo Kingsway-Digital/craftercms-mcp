@@ -6,7 +6,7 @@
 @Grab(group='org.springframework.ai', module='spring-ai-mcp',    version='1.0.0-M6', initClass=false)
 //@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.1.0-SNAPSHOT', initClass=false)
 
-@Grab(group='io.modelcontextprotocol', module='mcp-client', version='0.4.0', initClass=false)
+@Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.7.0')
 
 import groovy.json.JsonSlurper
 
