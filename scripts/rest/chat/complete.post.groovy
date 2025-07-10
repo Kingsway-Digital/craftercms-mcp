@@ -9,13 +9,13 @@
 
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
-import org.springframework.ai.mcp.client.McpClient
+//import org.springframework.ai.mcp.client.McpClient
 
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.client.advisor.api.Advisor
-import org.springframework.ai.chat.client.advisor.api.AdvisorContext
-import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
-import org.springframework.ai.chat.client.advisor.api.ChatClientAdvisor
+// import org.springframework.ai.chat.client.advisor.api.Advisor
+// import org.springframework.ai.chat.client.advisor.api.AdvisorContext
+// import org.springframework.ai.chat.client.advisor.api.AdvisorResponse
+// import org.springframework.ai.chat.client.advisor.api.ChatClientAdvisor
 
 /*
 def apiKey = System.getenv("crafter_chatgpt")
