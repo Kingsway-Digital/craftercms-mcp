@@ -29,6 +29,7 @@ def asyncClient
 try {
     // Initialize OpenAI ChatClient
     def apiKey = System.getenv("crafter_chatgpt")
+    
     def openAiApi = new OpenAiApi("https://api.openai.com", apiKey)
     def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
@@ -36,7 +37,7 @@ try {
 
  
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
-    def mcpServerUrl = System.getenv("MCP_SERVER_URL") ?: "http://localhost:3000/mcp"
+    def mcpServerUrl = "http://localhost:8080/mcp"
     def transport = new HttpClientSseClientTransport(mcpServerUrl)
     asyncClient = new McpAsyncClient(transport)
     asyncClient.initialize()
