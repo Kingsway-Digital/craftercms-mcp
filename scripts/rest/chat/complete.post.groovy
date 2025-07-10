@@ -32,28 +32,32 @@ try {
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
     def chatClient = ChatClient.builder(chatModel).build()
 
-    // Initialize McpClient with StdioClientTransport
-    def mcpClient = new McpAsyncClient([name: "mcp-client", version: "1.0.0"])
-    mcpClient.connect(new HttpClientSseClientTransport())
-    mcpClient.initialize()
+try {
+    // Instantiate McpAsyncClient with HttpClientSseClientTransport
+    def mcpServerUrl = System.getenv("MCP_SERVER_URL") ?: "http://localhost:3000/mcp"
+    def transport = new HttpClientSseClientTransport(mcpServerUrl)
+    def asyncClient = new McpAsyncClient(transport)
+    asyncClient.initialize()
 
-    // Log available MCP tools
-    def tools = mcpClient.listTools()
-    log.info("Available MCP tools: ${tools.tools?.collect { it.name } ?: 'No tools found'}")
+    // Log available tools
+    def tools = asyncClient.listToolsAsync().get()
+    log.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
     // Process prompt
     def response
     if (query.toLowerCase().startsWith("weather")) {
         def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
         def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
-        def toolResult = mcpClient.callTool(toolRequest)
-        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data available"
+        def toolResult = asyncClient.callToolAsync(toolRequest).get()
+        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
     } else {
-        response = chatClient.prompt().user(query).call().content()
+        response = "Non-weather prompts not supported"
     }
 
     return [response: response]
 } catch (Exception e) {
-    logger.error("Error: ${e.message}", e)
+    log.error("Error: ${e.message}", e)
     return [error: e.message]
+} finally {
+    asyncClient?.close()
 }
