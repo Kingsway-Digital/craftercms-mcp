@@ -24,6 +24,11 @@ import org.springframework.ai.chat.client.DefaultChatClientBuilder
 import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
 import org.springframework.ai.chat.client.advisor.api.Advisor
 
+
+import io.modelcontextprotocol.client.McpClient
+import io.modelcontextprotocol.client.Client
+import io.modelcontextprotocol.sdk.client.http.HttpClientTransport
+
 import org.springframework.ai.tool.StaticToolCallbackProvider       
 
 //import org.springframework.ai.mcp.client.McpClient
@@ -60,7 +65,7 @@ def transport = new HttpClientTransport(transportConfig)
 def clientConfig = [:]
 clientConfig.put("name", "mcp-client")
 clientConfig.put("version", "1.0.0")
-mcpClient = new McpClient(clientConfig)
+mcpClient = new Client(clientConfig)
 mcpClient.connect(transport)
 mcpClient.initialize()
 
