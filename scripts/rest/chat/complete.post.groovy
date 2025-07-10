@@ -42,13 +42,13 @@ def asyncClient
 
 try {
     // Initialize OpenAI ChatClient
-    def apiKey = System.getenv("crafter_chatgpt")
+    def  = System.getenv("crafter_chatgpt")
     
     def webClientBuilder = WebClient.builder()
     def restClientBuilder = RestClient.builder()
     restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
     
-    def openAiApi = new OpenAiApi("https://api.openai.com", openAIKey, restClientBuilder, webClientBuilder)
+    def openAiApi = new OpenAiApi("https://api.openai.com", apiKey, restClientBuilder, webClientBuilder)
 
     def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
     def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
