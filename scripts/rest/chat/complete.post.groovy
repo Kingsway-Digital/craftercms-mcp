@@ -56,7 +56,9 @@ try {
         response = "Non-weather prompts not supported"
     }
 
-    return [response: response]
+    def chatResponse = chatClient.prompt().user(query).call().content()
+
+    return [response: chatResponse]
 } catch (Exception e) {
     logger.error("Error: ${e.message}", e)
     return [error: e.message]
