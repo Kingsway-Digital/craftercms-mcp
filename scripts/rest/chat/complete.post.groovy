@@ -8,7 +8,7 @@
 @Grab(group='org.springframework.experimental', module='mcp', version='0.4.0', initClass=false)
 
 @Grab(group='org.springframework.experimental', module='mcp-webmvc-sse-transport', version='0.6.0', initClass=false)
-@Grab(group='org.springframework.experimental', module='mcp-webflux-sse-transport', version='0.6.0, initClass=false)
+@Grab(group='org.springframework.experimental', module='mcp-webflux-sse-transport', version='0.6.0', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0-M7', initClass=false)
 @Grab(group='org.springframework', module='spring-webmvc', version='6.1.14', initClass=false)
 @Grab(group='org.springframework', module='spring-context', version='6.1.14', initClass=false)
