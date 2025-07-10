@@ -1,6 +1,6 @@
 
 @GrabResolver(name='custom', root='https://repo.spring.io/snapshot', m2Compatible='true')
-@Grab(group='org.springframework.ai', module='spring-ai-core', version='1.1.0-SNAPSHOT', initClass=false)
+@Grab(group='org.springframework.ai', module='spring-ai-core',   version='1.1.0-SNAPSHOT', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.1.0-SNAPSHOT', initClass=false)
 //@Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.1.0-SNAPSHOT', initClass=false)
 //@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-spring-boot-starter', version='1.1.0-SNAPSHOT', initClass=false)
