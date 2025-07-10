@@ -77,7 +77,7 @@ try {
       //  { logMsg -> logger.info("Server log: ${logMsg.data}"); Mono.empty() } as Function
     //]
     
-    def samplingHandler = null //{ req -> Mono.just(new McpSchema.CreateMessageResult("Sample response")) } as Function
+    def samplingHandler = { req -> Mono.just(new McpSchema.CreateMessageResult("Sample response")) } as Function
 
     def mcpFeatures = new McpClientFeatures.Async(
         clientInfo,
