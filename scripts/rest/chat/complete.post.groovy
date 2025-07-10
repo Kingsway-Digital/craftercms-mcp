@@ -19,7 +19,8 @@ import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 
-import org.springframework.ai.tool.ToolCallbackProvider   
+import org.springframework.ai.tool.ToolCallbackProvider  
+import org.springframework.ai.mcp.AsyncMcpToolCallbackProvider
 
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.api.AdvisedResponse
@@ -46,86 +47,86 @@ if (!query) {
 
 def asyncClient
 
+//try {
+
 try {
-    // Initialize OpenAI ChatClient
-    def apiKey = System.getenv("crafter_chatgpt")
-    
-    def webClientBuilder = WebClient.builder()
-    def restClientBuilder = RestClient.builder()
-    restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
-    
-    def openAiApi = new OpenAiApi("https://api.openai.com", apiKey, restClientBuilder, webClientBuilder)
+    // all this stuff gets moved inside an advisor
+    asyncClient = initializeMcpClient(logger)
 
-    def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
-    def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
-    
-    def toolCallbackProvider = new McpToolCallbackProvider()
-    def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks([toolCallbackProvider]).build()
+    // Log available tools
+    def tools = asyncClient.listTools().get()
+    logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
 
-
-
-    try {
-        // all this stuff gets moved inside an advisor
-        asyncClient = initializeMcpClient(logger)
-
-        // Log available tools
-        def tools = asyncClient.listTools().get()
-        logger.info("MCP tools: ${tools.tools?.collect { it.name } ?: 'None'}")
-    
-        // Process prompt
-        def response
-        if (query.toLowerCase().startsWith("weather")) {
-            def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
-            def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
-            def toolResult = asyncClient.callToolAsync(toolRequest).get()
-            response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
-        } else {
-            response = "Non-weather prompts not supported"
-        }
-    }
-    catch(err) {
-        logger.error("MCP Client error " + err)
-    }
-
-    def chatResponse = chatClient.prompt().user(query).call().content()
-    return [response: chatResponse]
-    
-    
-    
-} catch (Exception e) {
-    logger.error("Error: ${e.message}", e)
-    return [error: e.message]
-} finally {
-    asyncClient?.close()
-}
-
-
-class McpToolCallbackProvider implements ToolCallbackProvider {
-
-    AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
-        def tools = [
-            [
-                type: 'function',
-                function: [
-                    name: 'get_weather',
-                    description: 'Get the current weather for a location',
-                    parameters: [
-                        type: 'object',
-                        properties: [
-                            location: [
-                                type: 'string',
-                                description: 'The city and state, e.g., New York, NY'
-                            ]
-                        ],
-                        required: ['location']
-                    ]
-                ]
-            ]
-        ]
-        context.chatClient().prompt().tools(tools)
-        chain.advise(context)
+    // Process prompt
+    def response
+    if (query.toLowerCase().startsWith("weather")) {
+        def city = query.split(/\s+/).drop(1).join(" ") ?: "London"
+        def toolRequest = [name: "getWeatherForecastByLocation", arguments: [city: city]]
+        def toolResult = asyncClient.callToolAsync(toolRequest).get()
+        response = toolResult.content?.find { it.type == "text" }?.text ?: "No weather data"
+    } else {
+        response = "Non-weather prompts not supported"
     }
 }
+catch(err) {
+    logger.error("MCP Client error " + err)
+}
+
+// Initialize OpenAI ChatClient
+def apiKey = System.getenv("crafter_chatgpt")
+
+def webClientBuilder = WebClient.builder()
+def restClientBuilder = RestClient.builder()
+restClientBuilder.defaultHeaders { it.set(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate") }
+
+def openAiApi = new OpenAiApi("https://api.openai.com", apiKey, restClientBuilder, webClientBuilder)
+
+def openAiChatOptions = OpenAiChatOptions.builder().model("gpt-4o-mini").build()
+def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
+
+def toolCallbackProvider = new AsyncMcpToolCallbackProvider(asyncClient)
+
+def chatClient = ChatClient.builder(chatModel).defaultToolCallbacks([toolCallbackProvider]).build()
+
+def chatResponse = chatClient.prompt().user(query).call().content()
+return [response: chatResponse]
+    
+    
+    
+// } catch (Exception e) {
+//     logger.error("Error: ${e.message}", e)
+//     return [error: e.message]
+// } finally {
+//     asyncClient?.close()
+// }
+
+
+//class McpToolCallbackProvider implements ToolCallbackProvider {
+
+    // AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
+    //     def tools = [
+    //         [
+    //             type: 'function',
+    //             function: [
+    //                 name: 'get_weather',
+    //                 description: 'Get the current weather for a location',
+    //                 parameters: [
+    //                     type: 'object',
+    //                     properties: [
+    //                         location: [
+    //                             type: 'string',
+    //                             description: 'The city and state, e.g., New York, NY'
+    //                         ]
+    //                     ],
+    //                     required: ['location']
+    //                 ]
+    //             ]
+    //         ]
+    //     ]
+    //     context.chatClient().prompt().tools(tools)
+    //     chain.advise(context)
+    // }
+//}
 
 def initializeMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
