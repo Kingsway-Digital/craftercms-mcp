@@ -7,7 +7,6 @@
 @Grab(group='io.modelcontextprotocol.sdk', module='mcp',              version='0.10.0',   initClass=false)
 @Grab(group='com.fasterxml.jackson.core',  module='jackson-databind', version='2.17.2',   initClass=false)
 
-
 import java.time.Duration
 
 import groovy.json.JsonSlurper
@@ -88,47 +87,13 @@ def chatModel = new OpenAiChatModel(openAiApi, openAiChatOptions)
 
 def toolCallbackProvider = new AsyncMcpToolCallbackProvider(asyncClient)
 
+//def chatClient = ChatClient.builder(chatModel).defaultTools(toolCallbackProvider).build()
 def chatClient = ChatClient.builder(chatModel).defaultTools(toolCallbackProvider).build()
 
 def chatResponse = chatClient.prompt().user(query).call().content()
 return [response: chatResponse]
     
     
-    
-// } catch (Exception e) {
-//     logger.error("Error: ${e.message}", e)
-//     return [error: e.message]
-// } finally {
-//     asyncClient?.close()
-// }
-
-
-//class McpToolCallbackProvider implements ToolCallbackProvider {
-
-    // AdvisorResponse CallAdvisor(AdvisorContext context, Advisor chain) {
-    //     def tools = [
-    //         [
-    //             type: 'function',
-    //             function: [
-    //                 name: 'get_weather',
-    //                 description: 'Get the current weather for a location',
-    //                 parameters: [
-    //                     type: 'object',
-    //                     properties: [
-    //                         location: [
-    //                             type: 'string',
-    //                             description: 'The city and state, e.g., New York, NY'
-    //                         ]
-    //                     ],
-    //                     required: ['location']
-    //                 ]
-    //             ]
-    //         ]
-    //     ]
-    //     context.chatClient().prompt().tools(tools)
-    //     chain.advise(context)
-    // }
-//}
 
 def initializeMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
