@@ -5,6 +5,8 @@
 @Grab('org.springframework.ai:spring-ai-starter-model-openai:1.0.0-M1')
 @Grab('org.springframework.ai:spring-ai-starter-mcp-client-webflux:1.0.0-M1')
 @Grab('org.springframework.ai:spring-ai-core:1.0.0-M1')
+    
+@Grab(group='org.springframework.ai', module='spring-ai-mcp-client-webflux-spring-boot-starter', version='1.0.0-M6')
 
 @Grab(group='org.springframework.ai', module='spring-ai-starter-mcp-client-webflux', version='1.0.0-M7', initClass=false)
 @Grab(group='org.springframework.ai', module='spring-ai-starter-model-openai', version='1.0.0-M7', initClass=false)
