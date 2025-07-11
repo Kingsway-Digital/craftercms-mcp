@@ -5,37 +5,54 @@ package org.craftercms.ai
 @Grab('org.slf4j:slf4j-api:2.0.16')
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
+import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.util.Assert;
+import io.modelcontextprotocol.util.Utils;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import groovy.util.logging.Slf4j
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.modelcontextprotocol.server.McpAsyncServer
 import io.modelcontextprotocol.server.McpServerFeatures
+import io.modelcontextprotocol.server.McpServerFeatures.Async
+import io.modelcontextprotocol.server.McpServerFeatures.AsyncResourceSpecification
+import io.modelcontextprotocol.server.McpServerFeatures.AsyncPromptSpecification
+import io.modelcontextprotocol.server.McpAsyncServerExchange
+import io.modelcontextprotocol.server.McpSyncServerExchange
+
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.ConcurrentHashMap
+import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory
+// import io.modelcontextprotocol.spec.McpSchema
 import io.modelcontextprotocol.spec.McpSchema.Tool
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult
+// import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest
 import io.modelcontextprotocol.spec.McpSchema.GetPromptResult
 import io.modelcontextprotocol.spec.McpSchema.PromptMessage
 import io.modelcontextprotocol.spec.McpSchema.Role
 import io.modelcontextprotocol.spec.McpSchema.TextContent
-import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory
-import io.modelcontextprotocol.spec.McpSchema
-import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
-import io.modelcontextprotocol.spec.McpSchema.ListToolsResult
-//import io.modelcontextprotocol.spec.McpSchema.ListToolsRequest
-import io.modelcontextprotocol.spec.McpSchema.CallToolRequest
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult
-//import io.modelcontextprotocol.spec.McpSchema.TextContentBlock
-//import io.modelcontextprotocol.spec.McpSchema.ListPromptsRequest
-import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult
-//import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
-//import io.modelcontextprotocol.spec.McpSchema.ListResourcesRequest
+// import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
+// import io.modelcontextprotocol.spec.McpSchema.ListToolsResult
+// import io.modelcontextprotocol.spec.McpSchema.ListToolsRequest
+// import io.modelcontextprotocol.spec.McpSchema.CallToolRequest
+// import io.modelcontextprotocol.spec.McpSchema.CallToolResult
+// //import io.modelcontextprotocol.spec.McpSchema.TextContentBlock
+// import io.modelcontextprotocol.spec.McpSchema.ListPromptsRequest
+// import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult
+// //import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
+// //import io.modelcontextprotocol.spec.McpSchema.ListResourcesRequest
 import java.util.concurrent.CompletableFuture
 import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider
 import java.time.Duration
 
-@Slf4j
 class McpHandler {
     private final ObjectMapper objectMapper = new ObjectMapper()
     private final Map<String, String> sessions = new ConcurrentHashMap<>()
@@ -49,9 +66,6 @@ class McpHandler {
         def objMapper = new ObjectMapper()
         def transportProvider = new HttpServletSseServerTransportProvider(objMapper, messageEndpoint, sseEndpoint)
         def uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory()
-        def features = new MyMcpServerFeatures()
-
-        server = new McpAsyncServer(transportProvider, objMapper, features, Duration.ofSeconds(10), uriTemplateManagerFactory) 
 
         // Register a sample tool
         def toolSpec = new McpServerFeatures.SyncToolSpecification(
@@ -71,6 +85,10 @@ class McpHandler {
             }
         )
         tools.add(toolSpec)
+
+        //def features = buildFeatures(serverInfo, serverCapabilities, resourceTemplates, instructions)
+
+        server = new McpAsyncServer(transportProvider, objMapper, tools, Duration.ofSeconds(10), uriTemplateManagerFactory) 
 
         // Register methods with the server
         server.registerMethod("initialize", this.&handleInitialize)
@@ -174,52 +192,88 @@ class McpHandler {
         }
         throw new IllegalArgumentException("Prompt not found: ${promptName}")
     }
+ 
+
+//     def buildFeatures(serverInfo, serverCapabilities, resourceTemplates, instructions) {
+//         List<McpServerFeatures.AsyncToolSpecification> tools = new ArrayList<>();
+//         // for (var tool : syncSpec.tools()) {
+//         //     tools.add(AsyncToolSpecification.fromSync(tool));
+//         // }
+
+//         Map<String, AsyncResourceSpecification> resources = new HashMap<>();
+//         // syncSpec.resources().forEach((key, resource) -> {
+//         //     resources.put(key, AsyncResourceSpecification.fromSync(resource));
+//         // });
+
+//         Map<String, AsyncPromptSpecification> prompts = new HashMap<>();
+//         // syncSpec.prompts().forEach((key, prompt) -> {
+//         //     prompts.put(key, AsyncPromptSpecification.fromSync(prompt));
+//         // });
+
+//         Map<McpSchema.CompleteReference, McpServerFeatures.AsyncCompletionSpecification> completions = new HashMap<>();
+//         // syncSpec.completions().forEach((key, completion) -> {
+//         //     completions.put(key, AsyncCompletionSpecification.fromSync(completion));
+//         // });
+
+//         List<BiFunction<McpAsyncServerExchange, List<McpSchema.Root>, Mono<Void>>> rootChangeConsumers = new ArrayList<>();
+
+//         // for (var rootChangeConsumer : syncSpec.rootsChangeConsumers()) {
+//         //     rootChangeConsumers.add((exchange, list) -> Mono
+//         //         .<Void>fromRunnable(() -> rootChangeConsumer.accept(new McpSyncServerExchange(exchange), list))
+//         //         .subscribeOn(Schedulers.boundedElastic()));
+//         // }
+
+        
+//         return new Async(serverInfo, serverCapabilities, tools, resources,
+//                         resourceTemplates, prompts, completions, rootChangeConsumers, instructions);
+            
+//     }
 }
 
 
-class MyMcpServerFeatures implements McpServerFeatures.Async {
-    @Override
-    CompletableFuture<ListToolsResult> listTools(ListToolsRequest request) {
-        def tools = [/* Define tools here */]
-        CompletableFuture.completedFuture(new ListToolsResult(tools: tools))
-    }
+//class MyMcpServerFeatures implements McpServerFeatures.Async {
+    // @Override
+    // CompletableFuture<ListToolsResult> listTools(ListToolsRequest request) {
+    //     def tools = [/* Define tools here */]
+    //     CompletableFuture.completedFuture(new ListToolsResult(tools: tools))
+    // }
 
-    @Override
-    CompletableFuture<CallToolResult> callTool(CallToolRequest request) {
-        def content = ["Tool executed: ${request.params?.name}"]
-        CompletableFuture.completedFuture(new CallToolResult(content: content))
-    }
+    // @Override
+    // CompletableFuture<CallToolResult> callTool(CallToolRequest request) {
+    //     def content = ["Tool executed: ${request.params?.name}"]
+    //     CompletableFuture.completedFuture(new CallToolResult(content: content))
+    // }
 
-    @Override
-    CompletableFuture<ListPromptsResult> listPrompts(ListPromptsRequest request) {
-        def prompts = [/* Define prompts here */]
-        CompletableFuture.completedFuture(new ListPromptsResult(prompts: prompts))
-    }
+    // @Override
+    // CompletableFuture<ListPromptsResult> listPrompts(ListPromptsRequest request) {
+    //     def prompts = [/* Define prompts here */]
+    //     CompletableFuture.completedFuture(new ListPromptsResult(prompts: prompts))
+    // }
 
-    @Override
-    CompletableFuture<GetPromptResult> getPrompt(GetPromptRequest request) {
-        def messages = [new Message(
-            role: "user",
-            content: "Prompt: ${request.params?.name}"
-        )]
-        CompletableFuture.completedFuture(new GetPromptResult(messages: messages))
-    }
+    // @Override
+    // CompletableFuture<GetPromptResult> getPrompt(GetPromptRequest request) {
+    //     def messages = [new Message(
+    //         role: "user",
+    //         content: "Prompt: ${request.params?.name}"
+    //     )]
+    //     CompletableFuture.completedFuture(new GetPromptResult(messages: messages))
+    // }
 
-    @Override
-    CompletableFuture<ListResourcesResult> listResources(ListResourcesRequest request) {
-        def resources = [/* Define resources here */]
-        CompletableFuture.completedFuture(new ListResourcesResult(resources: resources))
-    }
+    // @Override
+    // CompletableFuture<ListResourcesResult> listResources(ListResourcesRequest request) {
+    //     def resources = [/* Define resources here */]
+    //     CompletableFuture.completedFuture(new ListResourcesResult(resources: resources))
+    // }
 
-    @Override
-    CompletableFuture<McpSchema.ExecuteResourceResult> executeResource(McpSchema.ExecuteResourceRequest request) {
-        def data = new McpSchema.ExecuteResourceResult.Data(
-            forecast: [new McpSchema.ExecuteResourceResult.Data.Forecast(
-                date: "2025-07-11",
-                temperature: 25,
-                condition: "Sunny"
-            )]
-        )
-        CompletableFuture.completedFuture(new McpSchema.ExecuteResourceResult(data: data))
-    }
-}
+    // @Override
+    // CompletableFuture<McpSchema.ExecuteResourceResult> executeResource(McpSchema.ExecuteResourceRequest request) {
+    //     def data = new McpSchema.ExecuteResourceResult.Data(
+    //         forecast: [new McpSchema.ExecuteResourceResult.Data.Forecast(
+    //             date: "2025-07-11",
+    //             temperature: 25,
+    //             condition: "Sunny"
+    //         )]
+    //     )
+    //     CompletableFuture.completedFuture(new McpSchema.ExecuteResourceResult(data: data))
+    // }
+//}
