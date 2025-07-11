@@ -80,7 +80,6 @@ return [response: chatResponse]
 
 def buildMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
-    def mcpPreviewToken = "this may get difficult" 
     def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def clientInfo = new McpSchema.Implementation("mcp-client", "1.0.0")
     def clientCapabilities = McpSchema.ClientCapabilities.builder()

@@ -19,6 +19,21 @@ import io.modelcontextprotocol.spec.McpSchema.GetPromptResult
 import io.modelcontextprotocol.spec.McpSchema.PromptMessage
 import io.modelcontextprotocol.spec.McpSchema.Role
 import io.modelcontextprotocol.spec.McpSchema.TextContent
+import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory
+import io.modelcontextprotocol.spec.McpSchema
+import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
+import io.modelcontextprotocol.spec.McpSchema.ListToolsResult
+//import io.modelcontextprotocol.spec.McpSchema.ListToolsRequest
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult
+//import io.modelcontextprotocol.spec.McpSchema.TextContentBlock
+//import io.modelcontextprotocol.spec.McpSchema.ListPromptsRequest
+import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult
+//import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
+//import io.modelcontextprotocol.spec.McpSchema.ListResourcesRequest
+import java.util.concurrent.CompletableFuture
+import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider
+import java.time.Duration
 
 @Slf4j
 class McpHandler {
@@ -29,7 +44,14 @@ class McpHandler {
 
     McpHandler() {
         // Initialize McpServer
-        server = new McpAsyncServer()
+        def messageEndpoint = "/api/craftercms/mcp"
+        def sseEndpoint = "/api/craftermcp/sse.json"
+        def objMapper = new ObjectMapper()
+        def transportProvider = new HttpServletSseServerTransportProvider(objMapper, messageEndpoint, sseEndpoint)
+        def uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory()
+        def features = new MyMcpServerFeatures()
+
+        server = new McpAsyncServer(transportProvider, objMapper, features, Duration.ofSeconds(10), uriTemplateManagerFactory) 
 
         // Register a sample tool
         def toolSpec = new McpServerFeatures.SyncToolSpecification(
@@ -151,5 +173,53 @@ class McpHandler {
             )
         }
         throw new IllegalArgumentException("Prompt not found: ${promptName}")
+    }
+}
+
+
+class MyMcpServerFeatures implements McpServerFeatures.Async {
+    @Override
+    CompletableFuture<ListToolsResult> listTools(ListToolsRequest request) {
+        def tools = [/* Define tools here */]
+        CompletableFuture.completedFuture(new ListToolsResult(tools: tools))
+    }
+
+    @Override
+    CompletableFuture<CallToolResult> callTool(CallToolRequest request) {
+        def content = ["Tool executed: ${request.params?.name}"]
+        CompletableFuture.completedFuture(new CallToolResult(content: content))
+    }
+
+    @Override
+    CompletableFuture<ListPromptsResult> listPrompts(ListPromptsRequest request) {
+        def prompts = [/* Define prompts here */]
+        CompletableFuture.completedFuture(new ListPromptsResult(prompts: prompts))
+    }
+
+    @Override
+    CompletableFuture<GetPromptResult> getPrompt(GetPromptRequest request) {
+        def messages = [new Message(
+            role: "user",
+            content: "Prompt: ${request.params?.name}"
+        )]
+        CompletableFuture.completedFuture(new GetPromptResult(messages: messages))
+    }
+
+    @Override
+    CompletableFuture<ListResourcesResult> listResources(ListResourcesRequest request) {
+        def resources = [/* Define resources here */]
+        CompletableFuture.completedFuture(new ListResourcesResult(resources: resources))
+    }
+
+    @Override
+    CompletableFuture<McpSchema.ExecuteResourceResult> executeResource(McpSchema.ExecuteResourceRequest request) {
+        def data = new McpSchema.ExecuteResourceResult.Data(
+            forecast: [new McpSchema.ExecuteResourceResult.Data.Forecast(
+                date: "2025-07-11",
+                temperature: 25,
+                condition: "Sunny"
+            )]
+        )
+        CompletableFuture.completedFuture(new McpSchema.ExecuteResourceResult(data: data))
     }
 }
