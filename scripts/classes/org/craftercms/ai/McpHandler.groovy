@@ -69,11 +69,61 @@ class McpHandler {
 
         // Register a sample tool
         def toolSpec = new McpServerFeatures.SyncToolSpecification(
-            new Tool("calculator", "Basic calculator", [
-                operation: "string",
-                a: "number",
-                b: "number"
-            ]),
+            new Tool("calculator", 
+                     "Basic calculator", 
+                     "{ "+
+       " \"name\": \"query_database\",   "+
+       " \"title\": \"Database Query Tool\",   "+
+       " \"description\": \"Queries a database for records matching the given criteria\",   "+
+       " \"inputSchema\": {   "+
+       "   \"type\": \"object\",   "+
+       "   \"properties\": {   "+
+       "   \"query\": {   "+
+       "      \"type\": \"string\",   "+
+       "      \"description\": \"SQL query string to execute\"   "+
+       "    },   "+
+       "    \"limit\": {   "+
+       "      \"type\": \"integer\",   "+
+       "      \"description\": \"Maximum number of records to return\",   "+
+       "      \"minimum\": 1,   "+
+       "      \"maximum\": 100   "+
+       "    }   "+
+       "  },   "+
+       "  \"required\": [\"query\"]   "+
+       "},   "+
+       "\"outputSchema\": {   "+
+       "  \"type\": \"object\",   "+
+       "  \"properties\": {   "+
+       "    \"result\": {   "+
+       "      \"type\": \"array\",   "+
+       "      \"items\": {   "+
+       "        \"type\": \"object\",   "+
+       "        \"properties\": {   "+
+       "          \"id\": {   "+
+       "            \"type\": \"string\",   "+
+       "            \"description\": \"Record ID\"   "+
+       "          },   "+
+       "          \"data\": {   "+
+       "            \"type\": \"object\",   "+
+       "            \"description\": \"Record data\"   "+
+       "          }   "+
+       "        },   "+
+       "        \"required\": [\"id\"]   "+
+       "      },   "+
+       "      \"description\": \"List of matching records\"   "+
+       "    },   "+
+       "    \"isError\": {   "+
+       "      \"type\": \"boolean\",   "+
+       "      \"description\": \"Indicates if the query resulted in an error\"   "+
+       "    },   "+
+       "    \"errorMessage\": {   "+
+       "      \"type\": \"string\",   "+
+       "      \"description\": \"Error message if isError is true\"   "+
+       "    }   "+   
+       "  },   "+
+       "  \"required\": [\"result\", \"isError\"]   "+
+       "}   "+
+       "}"),
             { exchange, request ->
                 def args = request.arguments()
                 String operation = args.operation
