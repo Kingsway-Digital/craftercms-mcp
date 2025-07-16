@@ -224,24 +224,24 @@ class McpHandler {
             resp.setHeader("Connection", "keep-alive")
             
             // Simulate streaming tool results
-            def toolResult = new CallToolResult("Sample streamed result", "Streaming data")
+            def toolResult = "a result" //new CallToolResult("Sample streamed result", "Streaming data")
             resp.writer.write("event: tool_result\ndata: ${objectMapper.writeValueAsString(toolResult)}\n\n")
             resp.writer.flush()
             Thread.sleep(500)
             resp.writer.write("event: complete\ndata: Stream completed\n\n")
             resp.writer.flush()
         } catch (Exception e) {
-            log.error("Error streaming SSE event", e)
+            //log.error("Error streaming SSE event", e)
             resp.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
             resp.writer.write("event: error\ndata: Error streaming: ${e.message}\n\n")
             resp.writer.flush()
         }
     }
 
-    private def handleInitialize(def params) {
+    private def handleInitialize(params) {
         String sessionId = UUID.randomUUID().toString()
         sessions.put(sessionId, "active")
-        log.info("Initialized MCP session: ${sessionId}")
+        //log.info("Initialized MCP session: ${sessionId}")
         return [
             capabilities: [
                 tools: tools.collect { [name: it.tool.name, description: it.tool.description, parameters: it.tool.parameters] },

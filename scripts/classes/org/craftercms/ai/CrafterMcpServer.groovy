@@ -70,6 +70,10 @@ public class CrafterMcpServer  {
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
+        def session = mcpHandler.handleInitialize([:])
+        mcpHandler.handleSseEvent(req, resp, session.sessionId)
+
+
 //        if (req.getPathInfo()?.endsWith("/sse")) {
             resp.setContentType("text/event-stream");
             resp.setCharacterEncoding("UTF-8");
@@ -78,7 +82,7 @@ public class CrafterMcpServer  {
 
             try {
                 // Delegate SSE handling to WebMvcSseServerTransport
-                sseTransportProvider.handleConnection(req, resp, mcpServer);
+                //sseTransportProvider.handleConnection(req, resp, mcpServer);
             } catch (Exception e) {
                 //log.error("Error streaming SSE: ${e.message}", e);
                 resp.writer.write("event: error\ndata: Failed to stream response: ${e.message}\n\n");
