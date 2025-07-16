@@ -30,7 +30,10 @@ import io.modelcontextprotocol.server.McpSyncServerExchange
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.ConcurrentHashMap
+import io.modelcontextprotocol.server.McpServerFeatures
+import io.modelcontextprotocol.server.McpServerFeatures.Async
 import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory
+import io.modelcontextprotocol.util.McpUriTemplateManagerFactory
 // import io.modelcontextprotocol.spec.McpSchema
 import io.modelcontextprotocol.spec.McpSchema.Tool
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult
@@ -49,14 +52,18 @@ import io.modelcontextprotocol.spec.McpSchema.TextContent
 // import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult
 // //import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult
 // //import io.modelcontextprotocol.spec.McpSchema.ListResourcesRequest
+import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities
+import io.modelcontextprotocol.spec.McpSchema.Implementation
 import java.util.concurrent.CompletableFuture
 import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider
+import io.modelcontextprotocol.server.McpServer
+import io.modelcontextprotocol.server.McpSyncServer
 import java.time.Duration
 
 class McpHandler {
     private final ObjectMapper objectMapper = new ObjectMapper()
     private final Map<String, String> sessions = new ConcurrentHashMap<>()
-    private final McpAsyncServer server
+    public final McpAsyncServer server
     private final List<McpServerFeatures.SyncToolSpecification> tools = []
 
     McpHandler() {
@@ -64,12 +71,21 @@ class McpHandler {
         def messageEndpoint = "/api/craftercms/mcp"
         def sseEndpoint = "/api/craftermcp/sse.json"
         def objMapper = new ObjectMapper()
-        def transportProvider = new HttpServletSseServerTransportProvider(objMapper, messageEndpoint, sseEndpoint)
-        def uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory()
+        def transportProvider = HttpServletSseServerTransportProvider.builder().messageEndpoint(messageEndpoint).build()
+        //new HttpServletSseServerTransportProvider(objMapper, messageEndpoint, sseEndpoint)
+        
 
-        // Register a sample tool
-        def toolSpec = new McpServerFeatures.SyncToolSpecification(
-            new Tool("calculator", 
+        
+
+
+
+
+    //     def uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory()
+    //     def serverInfo = new Implementation("crafterMcp", "1.0.0")
+
+    //     // Register a sample tool
+    //     def toolSpec = new McpServerFeatures.SyncToolSpecification(
+    def tool = new Tool("calculator", 
                      "Basic calculator", 
                      "{ "+
        " \"name\": \"query_database\",   "+
@@ -123,27 +139,43 @@ class McpHandler {
        "  },   "+
        "  \"required\": [\"result\", \"isError\"]   "+
        "}   "+
-       "}"),
-            { exchange, request ->
-                def args = request.arguments()
-                String operation = args.operation
-                double a = args.a as double
-                double b = args.b as double
-                def result = operation == "add" ? a + b : (operation == "subtract" ? a - b : null)
-                if (result == null) throw new IllegalArgumentException("Unsupported operation: ${operation}")
-                return new CallToolResult("Calculation result: ${result}", result)
-            }
-        )
-        tools.add(toolSpec)
+       "}")
 
-        //def features = buildFeatures(serverInfo, serverCapabilities, resourceTemplates, instructions)
+        //Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
+		server = McpServer.async(transportProvider)
+			.serverInfo("test-server", "1.0.0")
+			.capabilities(ServerCapabilities.builder().tools(true).build())
+			.build();
 
-        server = new McpAsyncServer(transportProvider, objMapper, tools, Duration.ofSeconds(10), uriTemplateManagerFactory) 
+       
+    //,
+    //         { exchange, request ->
+    //             def args = request.arguments()
+    //             String operation = args.operation
+    //             double a = args.a as double
+    //             double b = args.b as double
+    //             def result = operation == "add" ? a + b : (operation == "subtract" ? a - b : null)
+    //             if (result == null) throw new IllegalArgumentException("Unsupported operation: ${operation}")
+    //             return new CallToolResult("Calculation result: ${result}", result)
+    //         }
+    //     )
+    //     tools.add(toolSpec)
+    //     def serverCapabilities = tools
+    //     def resourceTemplates = null
+    //     def instructions = null
 
-        // Register methods with the server
-        server.registerMethod("initialize", this.&handleInitialize)
-        server.registerMethod("tool/call", this.&handleToolCall)
-        server.registerMethod("prompt/get", this.&handlePromptGet)
+
+    //     server =  McpServer.sync(transportProvider)
+	// 		.serverInfo("test-server", "1.0.0")
+	// 		.capabilities(ServerCapabilities.builder().tools(true).build())
+	// 		.build();
+        
+         
+    //     // Register methods with the server
+    //     // server.registerMethod("initialize", this.&handleInitialize)
+    //     // server.registerMethod("tool/call", this.&handleToolCall)
+    //     // server.registerMethod("prompt/get", this.&handlePromptGet)
+    //     //server.initialize()
     }
 
     void handleRequest(HttpServletRequest req, HttpServletResponse resp) {
@@ -242,88 +274,7 @@ class McpHandler {
         }
         throw new IllegalArgumentException("Prompt not found: ${promptName}")
     }
- 
-
-//     def buildFeatures(serverInfo, serverCapabilities, resourceTemplates, instructions) {
-//         List<McpServerFeatures.AsyncToolSpecification> tools = new ArrayList<>();
-//         // for (var tool : syncSpec.tools()) {
-//         //     tools.add(AsyncToolSpecification.fromSync(tool));
-//         // }
-
-//         Map<String, AsyncResourceSpecification> resources = new HashMap<>();
-//         // syncSpec.resources().forEach((key, resource) -> {
-//         //     resources.put(key, AsyncResourceSpecification.fromSync(resource));
-//         // });
-
-//         Map<String, AsyncPromptSpecification> prompts = new HashMap<>();
-//         // syncSpec.prompts().forEach((key, prompt) -> {
-//         //     prompts.put(key, AsyncPromptSpecification.fromSync(prompt));
-//         // });
-
-//         Map<McpSchema.CompleteReference, McpServerFeatures.AsyncCompletionSpecification> completions = new HashMap<>();
-//         // syncSpec.completions().forEach((key, completion) -> {
-//         //     completions.put(key, AsyncCompletionSpecification.fromSync(completion));
-//         // });
-
-//         List<BiFunction<McpAsyncServerExchange, List<McpSchema.Root>, Mono<Void>>> rootChangeConsumers = new ArrayList<>();
-
-//         // for (var rootChangeConsumer : syncSpec.rootsChangeConsumers()) {
-//         //     rootChangeConsumers.add((exchange, list) -> Mono
-//         //         .<Void>fromRunnable(() -> rootChangeConsumer.accept(new McpSyncServerExchange(exchange), list))
-//         //         .subscribeOn(Schedulers.boundedElastic()));
-//         // }
-
-        
-//         return new Async(serverInfo, serverCapabilities, tools, resources,
-//                         resourceTemplates, prompts, completions, rootChangeConsumers, instructions);
-            
-//     }
 }
 
 
-//class MyMcpServerFeatures implements McpServerFeatures.Async {
-    // @Override
-    // CompletableFuture<ListToolsResult> listTools(ListToolsRequest request) {
-    //     def tools = [/* Define tools here */]
-    //     CompletableFuture.completedFuture(new ListToolsResult(tools: tools))
-    // }
 
-    // @Override
-    // CompletableFuture<CallToolResult> callTool(CallToolRequest request) {
-    //     def content = ["Tool executed: ${request.params?.name}"]
-    //     CompletableFuture.completedFuture(new CallToolResult(content: content))
-    // }
-
-    // @Override
-    // CompletableFuture<ListPromptsResult> listPrompts(ListPromptsRequest request) {
-    //     def prompts = [/* Define prompts here */]
-    //     CompletableFuture.completedFuture(new ListPromptsResult(prompts: prompts))
-    // }
-
-    // @Override
-    // CompletableFuture<GetPromptResult> getPrompt(GetPromptRequest request) {
-    //     def messages = [new Message(
-    //         role: "user",
-    //         content: "Prompt: ${request.params?.name}"
-    //     )]
-    //     CompletableFuture.completedFuture(new GetPromptResult(messages: messages))
-    // }
-
-    // @Override
-    // CompletableFuture<ListResourcesResult> listResources(ListResourcesRequest request) {
-    //     def resources = [/* Define resources here */]
-    //     CompletableFuture.completedFuture(new ListResourcesResult(resources: resources))
-    // }
-
-    // @Override
-    // CompletableFuture<McpSchema.ExecuteResourceResult> executeResource(McpSchema.ExecuteResourceRequest request) {
-    //     def data = new McpSchema.ExecuteResourceResult.Data(
-    //         forecast: [new McpSchema.ExecuteResourceResult.Data.Forecast(
-    //             date: "2025-07-11",
-    //             temperature: 25,
-    //             condition: "Sunny"
-    //         )]
-    //     )
-    //     CompletableFuture.completedFuture(new McpSchema.ExecuteResourceResult(data: data))
-    // }
-//}

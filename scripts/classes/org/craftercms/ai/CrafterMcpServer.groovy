@@ -21,19 +21,16 @@ public class CrafterMcpServer  {
 
     public CrafterMcpServer() {
         // Initializing MCP server with McpServerFeatures
-        this.mcpServer = McpAsyncServer.sync()
-                .serverInfo("mcp-server", "1.0.0")
-                .features(new McpServerFeatures()
-                    .addSyncTool(
-                        new Tool("handleRequest", "Handles JSON-RPC requests", null),
-                        (exchange, args) -> {
-                            def params = args instanceof Map ? args : [:];
-                            def result = mcpHandler.handleRequest(params.method, params.params, exchange.request, exchange.response);
-                            return new CallToolResult(result);
-                        }
-                    )
-                )
-                .build();
+        def features = new McpServerFeatures()
+                    // .addSyncTool(
+                    //     new Tool("handleRequest", "Handles JSON-RPC requests", null),
+                    //     (exchange, args) -> {
+                    //         def params = args instanceof Map ? args : [:];
+                    //         def result = mcpHandler.handleRequest(params.method, params.params, exchange.request, exchange.response);
+                    //         return new CallToolResult(result);
+                    //     }
+                    // )
+        this.mcpServer = mcpHandler.server//.features(features).build()
 
         // Initializing SSE transport provider
         this.sseTransportProvider = new HttpServletSseServerTransportProvider(objectMapper, "/sse");
@@ -73,7 +70,7 @@ public class CrafterMcpServer  {
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
-        if (req.getPathInfo()?.endsWith("/sse")) {
+//        if (req.getPathInfo()?.endsWith("/sse")) {
             resp.setContentType("text/event-stream");
             resp.setCharacterEncoding("UTF-8");
             resp.setHeader("Cache-Control", "no-cache");
@@ -87,10 +84,10 @@ public class CrafterMcpServer  {
                 resp.writer.write("event: error\ndata: Failed to stream response: ${e.message}\n\n");
                 resp.writer.flush();
             }
-        } else {
-            resp.status = HttpServletResponse.SC_NOT_FOUND;
-            resp.writer.write(objectMapper.writeValueAsString([jsonrpc: "2.0", error: [code: -32601, message: "Method not found"]]));
-        }
+        // } else {
+        //     resp.status = HttpServletResponse.SC_NOT_FOUND;
+        //     resp.writer.write(objectMapper.writeValueAsString([jsonrpc: "2.0", error: [code: -32601, message: "Method not found"]]));
+        // }
     }
 
     private void sendError(HttpServletResponse resp, int code, String message) {
