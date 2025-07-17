@@ -73,13 +73,6 @@ class McpHandler {
         def objMapper = new ObjectMapper()
         def transportProvider = HttpServletSseServerTransportProvider.builder().messageEndpoint(messageEndpoint).build()
         //new HttpServletSseServerTransportProvider(objMapper, messageEndpoint, sseEndpoint)
-        
-
-        
-
-
-
-
     //     def uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory()
     //     def serverInfo = new Implementation("crafterMcp", "1.0.0")
 

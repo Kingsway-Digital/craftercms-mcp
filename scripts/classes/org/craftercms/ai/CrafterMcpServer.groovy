@@ -70,28 +70,20 @@ public class CrafterMcpServer  {
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
-        def session = mcpHandler.handleInitialize([:])
-        mcpHandler.handleSseEvent(req, resp, session.sessionId)
+        try {
 
+            def session = mcpHandler.handleInitialize([:])
+            mcpHandler.handleSseEvent(req, resp, session.sessionId)
 
-//        if (req.getPathInfo()?.endsWith("/sse")) {
             resp.setContentType("text/event-stream");
             resp.setCharacterEncoding("UTF-8");
             resp.setHeader("Cache-Control", "no-cache");
             resp.setHeader("Connection", "keep-alive");
-
-            try {
-                // Delegate SSE handling to WebMvcSseServerTransport
-                //sseTransportProvider.handleConnection(req, resp, mcpServer);
-            } catch (Exception e) {
-                //log.error("Error streaming SSE: ${e.message}", e);
-                resp.writer.write("event: error\ndata: Failed to stream response: ${e.message}\n\n");
-                resp.writer.flush();
-            }
-        // } else {
-        //     resp.status = HttpServletResponse.SC_NOT_FOUND;
-        //     resp.writer.write(objectMapper.writeValueAsString([jsonrpc: "2.0", error: [code: -32601, message: "Method not found"]]));
-        // }
+        } catch (Exception e) {
+            //log.error("Error streaming SSE: ${e.message}", e);
+            resp.writer.write("event: error\ndata: Failed to stream response: ${e.message}\n\n");
+            resp.writer.flush();
+        }
     }
 
     private void sendError(HttpServletResponse resp, int code, String message) {

@@ -54,7 +54,9 @@ if (!query) {
 }
 
 def asyncClient = buildMcpClient(logger)
-asyncClient.initialize()
+logger.info("XXXXXXXXXXX")
+asyncClient.initialize().block()
+logger.info("XXXXXXXXXXX")
 
 // Initialize OpenAI ChatClient
 def apiKey = System.getenv("crafter_chatgpt")
@@ -129,6 +131,10 @@ def buildMcpClient(logger) {
     def httpClient = HttpClient.newBuilder()
     def requestBuilder = HttpRequest.newBuilder()
     requestBuilder.uri(java.net.URI.create(mcpServerUrl+sseEndpoint))
+
+    // this is a hack because Crafter REST APIs only accept json or xml
+    // the downside is that the client needs to send this incorrect value in order
+    // to work. 
     requestBuilder.header("Accept", "application/json")//event-stream;charset=UTF-8")
    
     def objMapper = new ObjectMapper()
