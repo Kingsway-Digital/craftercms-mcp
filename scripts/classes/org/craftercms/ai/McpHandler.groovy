@@ -217,7 +217,15 @@ class McpHandler {
             resp.setHeader("Connection", "keep-alive")
             
             // Simulate streaming tool results
-            def toolResult = "a result" //new CallToolResult("Sample streamed result", "Streaming data")
+            
+            def toolResult = ""
+            try {
+                def map = [:]
+                map.a = "k"
+                toolResult = new CallToolResult("Sample streamed result", false)
+            }catch(err) {toolResult = err}
+
+
             resp.writer.write("event: tool_result\ndata: ${objectMapper.writeValueAsString(toolResult)}\n\n")
             resp.writer.flush()
             Thread.sleep(500)
