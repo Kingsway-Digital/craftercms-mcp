@@ -80,7 +80,6 @@ return [response: chatResponse]
 
 def buildMcpClient(logger) {
     // Instantiate McpAsyncClient with HttpClientSseClientTransport
-    def mcpServerUrl = "http://localhost:8080/api/craftercms/mcp"
     def clientInfo = new McpSchema.Implementation("mcp-client", "1.0.0")
     def clientCapabilities = McpSchema.ClientCapabilities.builder()
         .roots(true)
@@ -123,12 +122,18 @@ def buildMcpClient(logger) {
 
     // externalize these. site names can change. this token only works on my local instance
     def siteId = "mcp"
+    def mcpServerUrl = "http://localhost:8080"
+    def sseEndpoint = "/api/craftermcp/sse.json"    
     def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
 
     def httpClient = HttpClient.newBuilder()
     def requestBuilder = HttpRequest.newBuilder()
+    requestBuilder.uri(java.net.URI.create(mcpServerUrl+sseEndpoint))
+    requestBuilder.header("Accept", "application/json")//event-stream;charset=UTF-8")
+   
     def objMapper = new ObjectMapper()
-    def sseEndpoint = "/api/craftermcp/sse.json"
+
+
     requestBuilder.setHeader("X-Crafter-Site", siteId)
     requestBuilder.setHeader("X-Crafter-Preview", previewToken)
 
