@@ -54,6 +54,10 @@ def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
 def query = requestBody.message
 
+// Ensure the thread's context class loader is set
+def cl = this.class.classLoader.getSystemClassLoader()
+Thread.currentThread().setContextClassLoader(cl)
+
 // Input validation
 if (!query) {
     logger.error("Message field is missing from request")
