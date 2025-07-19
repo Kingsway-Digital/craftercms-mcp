@@ -56,7 +56,9 @@ class McpHandler {
         def messageEndpoint = "/api/craftercms/mcp"
         def sseEndpoint = "/api/craftermcp/sse.json"
         def objMapper = new ObjectMapper()
-        def transportProvider = HttpServletSseServerTransportProvider.builder().messageEndpoint(messageEndpoint).build()
+        def transportProvider = HttpServletSseServerTransportProvider.builder()
+               .baseUrl("http://localhost:8080")
+               .messageEndpoint(messageEndpoint).build()
 
         //     def toolSpec = new McpServerFeatures.SyncToolSpecification(
         def sampleTool = new Tool("calculator", "Basic calculator", SAMPLE_TOOL_SCHEMA)
@@ -138,9 +140,32 @@ class McpHandler {
 //             resp.writer.write("message: result\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":${objectMapper.writeValueAsString(toolResult)}}\n\n")
 //             resp.writer.flush()
 //   //          Thread.sleep(500)
-//           System.out.println("SSE :Done")
 
-            resp.writer.write("message: done\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"result\":\"success\",\"isError\":false}}\n\n")
+        def INIT_EVENT = "event: initialize\n" +
+                 "data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocol_version\":\"2024-11-05\",\"capabilities\":{\"tools\":true,\"resources\":true,\"prompts\":true},\"server_info\":{\"name\":\"my-server\",\"version\":\"1.0.0\"}}}\n\n"
+
+        resp.writer.write(INIT_EVENT)
+
+        def ENDPOINT_EVENT = "event: endpoint\n" +
+                     "data: http://localhost:8080/api/craftermcp/mcp.json\n\n"
+
+        resp.writer.write(ENDPOINT_EVENT)
+
+        
+        def TOOLS_LIST_EVENT = "event: tools/list\n" +
+                       "data: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\"name\":\"search\",\"description\":\"Search API\",\"parameters\":{\"city\":\"string\"}},{\"name\":\"calculator\",\"description\":\"Math calculations\",\"parameters\":{\"expression\":\"string\"}},{\"name\":\"database_query\",\"description\":\"Query database\",\"parameters\":{\"query\":\"string\"}}]}}\n\n"
+
+        resp.writer.write(TOOLS_LIST_EVENT)
+
+        def ENDPOINT = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2024-11-05\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"title\": \"Example Server Display Name\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }\n\n"           
+                
+                resp.writer.write(ENDPOINT)
+
+        def CAPABILITIES = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2024-11-05\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"title\": \"Example Server Display Name\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }\n\n"           
+                
+                resp.writer.write(CAPABILITIES)
+
+            // resp.writer.write("message: done\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"result\":\"success\",\"isError\":false}}\n\n")
             resp.writer.flush()
         } catch (Exception e) {
             //log.error("Error streaming SSE event", e)

@@ -149,8 +149,8 @@ def buildOpenAiChatModel() {
  */
 def buildMcpClient(logger) {
     def siteId = "mcp"
-    def mcpServerUrl = "http://localhost:8080"
-    def sseEndpoint = "/api/craftermcp/sse.json"
+    def mcpServerUrl = "http://localhost:8080/"
+    def sseEndpoint = "api/craftermcp/sse.json"
     def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
 
     def httpClient = HttpClient.newBuilder()
