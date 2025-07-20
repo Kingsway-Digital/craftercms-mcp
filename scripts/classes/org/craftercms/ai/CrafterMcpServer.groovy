@@ -41,7 +41,8 @@ public class CrafterMcpServer  {
         resp.setCharacterEncoding("UTF-8");
 
         try {
-            def jsonRequest = objectMapper.readValue(req.getReader(), Map);
+            def jsonRequest = objectMapper.readValue(req.getReader(), Map)
+
             if (!jsonRequest.jsonrpc || jsonRequest.jsonrpc != "2.0") {
                 resp.sendError(resp, -32600, "Invalid JSON-RPC 2.0 request");
                 return;
@@ -51,7 +52,7 @@ public class CrafterMcpServer  {
             def params = jsonRequest.params;
             String id = jsonRequest.id;
 
-            //log.info("Received MCP request: method=${method}, id=${id}");
+            System.out.println("Received MCP request: method=${method}, id=${id}");
 
             // Use MCP server to handle the request
             def result = mcpHandler.handleRequest(method, params, req, resp);
@@ -65,7 +66,9 @@ public class CrafterMcpServer  {
             }
         } catch (Exception e) {
             // log.error("Error processing MCP request: ${e.message}", e);
-            resp.sendError(resp, -32603, "Internal error: ${e.message}");
+            // resp.sendError(-32603, "Internal error: ${e.message}");
+            System.out.println("message error: ${e.message}")
+            resp.sendError(200, "Internal error: ${e.message}");
         }
     }
 
