@@ -10,16 +10,18 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.time.Instant
 import java.util.UUID
-import java.util.logging.Logger
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 // MCP server with HTTP Servlets and synchronous event checking
 class CrafterMcpServer extends HttpServlet {
     private static final Gson gson = new Gson()
-    private static final Logger logger = Logger.getLogger(CrafterMcpServer.class.getName())
+    private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class)
     private String serverId
     private boolean running
     
@@ -62,13 +64,13 @@ class CrafterMcpServer extends HttpServlet {
     void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!running) {
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE)
-            logger.warning("GET request rejected: Server is shutting down")
+            logger.warn("GET request rejected: Server is shutting down")
             return
         }
 
         // All GET requests return 404 (no SSE support)
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND)
-        logger.warning("Invalid GET request path: ${req.getServletPath()}")
+        logger.warn("Invalid GET request path: ${req.getServletPath()}")
     }
 
     // Handle incoming JSON-RPC requests
@@ -108,7 +110,7 @@ class CrafterMcpServer extends HttpServlet {
                     sendError(out, id, -32601, "Method not found: $method")
             }
         } catch (Exception e) {
-            logger.severe("Parse error: ${e.getMessage()}")
+            logger.error("Parse error: ${e.getMessage()}")
             sendError(out, null, -32700, "Parse error: ${e.getMessage()}")
         }
     }
@@ -353,7 +355,7 @@ class CrafterMcpServer extends HttpServlet {
         error.addProperty("message", message)
         response.add("error", error)
         out.println(gson.toJson(response))
-        logger.warning("Sent error response: code=$code, message=$message")
+        logger.warn("Sent error response: code=$code, message=$message")
     }
 
     // Send JSON-RPC error response with HTTP status

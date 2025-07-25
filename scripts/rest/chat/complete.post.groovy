@@ -9,7 +9,6 @@
 import java.time.Duration
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.logging.Logger
 
 import groovy.json.JsonSlurper
 
@@ -36,34 +35,32 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-/**
- * Main execution logic
- */
-def javaLogger = Logger.getLogger("complete.post")
+
+
 def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
 def query = requestBody.message
 
-// Input validation
+
 if (!query) {
-    javaLogger.severe("Message field is missing from request")
+    logger.error("Message field is missing from request")
     return [error: "Message field is required"]
 }
 
-javaLogger.info("Processing query: ${query}")
+logger.info("Processing query: ${query}")
 
 try {
     // Initialize MCP client
-    def mcpClient = buildMcpClient(javaLogger)
-    javaLogger.info("MCP client built successfully")
+    def mcpClient = buildMcpClient(logger)
+    logger.info("MCP client built successfully")
     
     // Initialize MCP client
     def mcpClientInitResult = mcpClient.initialize()
-    javaLogger.info("MCP client initialized successfully: ${mcpClientInitResult}")
+    logger.info("MCP client initialized successfully: ${mcpClientInitResult}")
 
     // Initialize OpenAI ChatClient with our custom MCP tool provider
     def chatModel = buildOpenAiChatModel()
-    def toolCallbackProvider = new CustomMcpToolCallbackProvider(mcpClient, javaLogger)
+    def toolCallbackProvider = new CustomMcpToolCallbackProvider(mcpClient, logger)
     
     // FIXED: Use defaultToolCallbacks() instead of defaultTools()
     def chatClient = ChatClient.builder(chatModel)
@@ -76,11 +73,11 @@ try {
         .call()
         .content()
 
-    javaLogger.info("Chat response generated successfully: ${chatResponse}")
+    logger.info("Chat response generated successfully: ${chatResponse}")
     return [response: chatResponse]
 
 } catch (Exception e) {
-    javaLogger.severe("Error processing request: ${e.message}")
+    logger.error("Error processing request: ${e.message}")
     return [error: "Internal server error: ${e.message}"]
 }
 
@@ -132,7 +129,7 @@ def buildOpenAiChatModel() {
 /**
  * Build MCP client with synchronous HTTP configuration
  */
-def buildMcpClient(javaLogger) {
+def buildMcpClient(logger) {
     def siteId = "mcp"
     def mcpServerUrl = "http://localhost:8080/"
     def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
@@ -149,7 +146,7 @@ def buildMcpClient(javaLogger) {
         }
         .build()
 
-    return new CustomMcpSyncClient(restClient, objMapper, javaLogger)
+    return new CustomMcpSyncClient(restClient, objMapper, logger)
 }
 
 /**
@@ -158,10 +155,10 @@ def buildMcpClient(javaLogger) {
 class CustomMcpSyncClient {
     private final RestClient restClient
     private final ObjectMapper objectMapper
-    private final Logger logger
+    def logger
     private boolean initialized = false
 
-    CustomMcpSyncClient(RestClient restClient, ObjectMapper objectMapper, Logger logger) {
+    CustomMcpSyncClient( restClient,  objectMapper,  logger) {
         this.restClient = restClient
         this.objectMapper = objectMapper
         this.logger = logger
@@ -269,16 +266,16 @@ class CustomMcpSyncClient {
  */
 class CustomMcpToolCallbackProvider implements ToolCallbackProvider {
     private final CustomMcpSyncClient mcpClient
-    private final Logger logger
+    def logger
 
-    CustomMcpToolCallbackProvider(CustomMcpSyncClient mcpClient, Logger logger) {
+    CustomMcpToolCallbackProvider( mcpClient,  logger) {
         this.mcpClient = mcpClient
         this.logger = logger
     }
 
     ToolCallback[] getToolCallbacks() {
         if (!mcpClient.isInitialized()) {
-            logger.warning("MCP client not initialized, returning empty tool list")
+            logger.warn("MCP client not initialized, returning empty tool list")
             return new ToolCallback[0]
         }
 
@@ -306,7 +303,7 @@ class CustomMcpToolCallbackProvider implements ToolCallbackProvider {
             return toolResults
             
         } catch (Exception e) {
-            logger.severe("Error listing MCP tools: ${e.message}")
+            logger.error("Error listing MCP tools: ${e.message}")
             return new ToolCallback[0]
         }
     }
@@ -385,8 +382,7 @@ class CustomResponseErrorHandler implements ResponseErrorHandler {
             errorMessage += ": ${errorBody}"
         }
         
-        def javaLogger = Logger.getLogger("complete.post")
-        javaLogger.severe("OpenAI API error: ${errorMessage}")
+        logger.error("OpenAI API error: ${errorMessage}")
         throw new RuntimeException("OpenAI API error: ${errorMessage}")
     }
 }
