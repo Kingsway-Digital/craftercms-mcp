@@ -82,22 +82,28 @@ class McpHandler {
     
         try {
             // Manual JSON-RPC request handling
+ System.out.println("X")
             def requestBody = req.reader.text
             def requestJson = objectMapper.readValue(requestBody, Map)
             def method = requestJson.method
             def params = requestJson.params
             def id = requestJson.id
+ System.out.println("Y")
 
-            def result = server.handleRequest(method, params)
+            def result =  INITIALIZED_MESSAGE//server.handleRequest(method, params)
+ System.out.println("Z")
+
             resp.contentType = "application/json"
             resp.writer.write(objectMapper.writeValueAsString([
                 jsonrpc: "2.0",
                 result: result,
                 id: id
             ]))
+ System.out.println("Z1")
+
             resp.writer.flush()
         } catch (Exception e) {
-            log.error("Error handling request", e)
+            System.out.println("Error handling request"+e)
             resp.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
             resp.contentType = "application/json"
             resp.writer.write(objectMapper.writeValueAsString([
@@ -151,15 +157,16 @@ class McpHandler {
 
         resp.writer.write(ENDPOINT_EVENT)
 
-        
+        def ENDPOINT = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2024-11-05\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"title\": \"Example Server Display Name\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }\n\n"           
+                
+        resp.writer.write(ENDPOINT)
+       
+       
         def TOOLS_LIST_EVENT = "event: tools/list\n" +
                        "data: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"tools\":[{\"name\":\"search\",\"description\":\"Search API\",\"parameters\":{\"city\":\"string\"}},{\"name\":\"calculator\",\"description\":\"Math calculations\",\"parameters\":{\"expression\":\"string\"}},{\"name\":\"database_query\",\"description\":\"Query database\",\"parameters\":{\"query\":\"string\"}}]}}\n\n"
 
         resp.writer.write(TOOLS_LIST_EVENT)
 
-        def ENDPOINT = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2024-11-05\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"title\": \"Example Server Display Name\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }\n\n"           
-                
-                resp.writer.write(ENDPOINT)
 
         def CAPABILITIES = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2024-11-05\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"title\": \"Example Server Display Name\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }\n\n"           
                 
@@ -214,6 +221,9 @@ class McpHandler {
         }
         throw new IllegalArgumentException("Prompt not found: ${promptName}")
     }
+
+    def INITIALIZED_MESSAGE = "{    \"jsonrpc\": \"2.0\",    \"id\": 1,    \"result\": {      \"protocolVersion\": \"2025-03-26\",      \"capabilities\": {        \"logging\": {},        \"prompts\": {          \"listChanged\": true        },        \"resources\": {          \"subscribe\": true,          \"listChanged\": true        },        \"tools\": {          \"listChanged\": true        }      },      \"serverInfo\": {        \"name\": \"ExampleServer\",        \"version\": \"1.0.0\"      },      \"instructions\": \"Optional instructions for the client\"    }  }"
+
 
     def SAMPLE_TOOL_SCHEMA = "{ "+
        " \"name\": \"query_database\",   "+
