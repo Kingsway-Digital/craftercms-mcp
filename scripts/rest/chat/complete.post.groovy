@@ -209,7 +209,7 @@ class CustomMcpSyncClient {
 
         def request = [
             jsonrpc: "2.0",
-            method: "/api/craftermcp/tools.json",
+            method: "tools/list",
             params: [:],
             id: UUID.randomUUID().toString()
         ]
@@ -217,7 +217,7 @@ class CustomMcpSyncClient {
         logger.info("Sending listTools request: ${objectMapper.writeValueAsString(request)}")
         
         def response = restClient.post()
-            .uri("/api/craftermcp/tools.json")
+            .uri("/api/craftermcp/mcp.json")
             .body(request)
             .retrieve()
 

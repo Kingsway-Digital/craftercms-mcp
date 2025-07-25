@@ -140,9 +140,6 @@ class CrafterMcpServer extends HttpServlet {
 
     // Handle tools/list request
     def handleToolsList(JsonElement id, PrintWriter out) {
-    }
-
-    def handleToolsList(JsonElement id) {
         JsonObject response = new JsonObject()
         response.addProperty("jsonrpc", "2.0")
         response.add("id", id)
@@ -186,7 +183,7 @@ class CrafterMcpServer extends HttpServlet {
         result.add("tools", tools)
         response.add("result", result)
 
-        return response
+        out.println(gson.toJson(response))
     }
 
 
