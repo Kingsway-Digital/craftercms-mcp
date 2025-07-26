@@ -1,6 +1,8 @@
 package org.craftercms.ai
 
 @Grab('com.google.code.gson:gson:2.10.1')
+@Grab(group='org.springframework.ai', module='spring-ai-client-chat', version='1.0.0', initClass=false, systemClassLoader=true)
+
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -9,6 +11,7 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.PrintWriter
 import java.time.Instant
+
 import java.util.UUID
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -18,21 +21,26 @@ import com.google.gson.JsonObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-// MCP server with HTTP Servlets and synchronous event checking
+import java.util.function.Function
+import org.springframework.ai.tool.function.FunctionToolCallback
+
 class CrafterMcpServer extends HttpServlet {
-    private static final Gson gson = new Gson()
+
     private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class)
+    private static final Gson gson = new Gson()
     private String serverId
     private boolean running
-    
+    private ArrayList<McpTool> mcpTools = []    
 
+    public ArrayList<FunctionToolCallback> getMcpTools() { return mcpTools }
+    public void setMcpTools(ArrayList<McpTool> value) { mcpTools = value }
 
     CrafterMcpServer() {
         this.serverId = UUID.randomUUID().toString()
         this.running = true
-    }
+        this.mcpTools = []
+    }  
 
-    @Override
     void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!running) {
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE)
@@ -60,7 +68,6 @@ class CrafterMcpServer extends HttpServlet {
         }
     }
 
-    @Override
     void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!running) {
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE)
@@ -68,12 +75,10 @@ class CrafterMcpServer extends HttpServlet {
             return
         }
 
-        // All GET requests return 404 (no SSE support)
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND)
         logger.warn("Invalid GET request path: ${req.getServletPath()}")
     }
 
-    // Handle incoming JSON-RPC requests
     private void handleRequest(String jsonInput, PrintWriter out) {
 
         try {
@@ -94,12 +99,12 @@ class CrafterMcpServer extends HttpServlet {
                 case "tools/call":
                     handleToolCall(id, params, out)
                     break
-                case "resources/read":
-                    handleResourceRead(id, params, out)
-                    break
-                case "prompts/list":
-                    handlePromptsList(id, out)
-                    break
+                // case "resources/read":
+                //     handleResourceRead(id, params, out)
+                //     break
+                // case "prompts/list":
+                //     handlePromptsList(id, out)
+                //     break
                 case "events/check":
                     handleEventsCheck(id, out)
                     break
@@ -115,7 +120,6 @@ class CrafterMcpServer extends HttpServlet {
         }
     }
 
-    // Handle initialization handshake
     private void handleInitialize(JsonElement id, PrintWriter out) {
         JsonObject response = new JsonObject()
         response.addProperty("jsonrpc", "2.0")
@@ -140,7 +144,6 @@ class CrafterMcpServer extends HttpServlet {
         logger.info("Sent initialize response: ${gson.toJson(response)}")
     }
 
-    // Handle tools/list request
     def handleToolsList(JsonElement id, PrintWriter out) {
         JsonObject response = new JsonObject()
         response.addProperty("jsonrpc", "2.0")
@@ -148,38 +151,35 @@ class CrafterMcpServer extends HttpServlet {
 
         JsonArray tools = new JsonArray()
 
-        // getCurrentTime tool
-        JsonObject timeTool = new JsonObject()
-        timeTool.addProperty("name", "getCurrentTime")
-        timeTool.addProperty("description", "Returns the current server time")
-        JsonObject timeInputSchema = new JsonObject()
-        timeInputSchema.addProperty("type", "object")
-        timeInputSchema.add("properties", new JsonObject())
-        timeTool.add("inputSchema", timeInputSchema)
-        tools.add(timeTool)
+        mcpTools.each { mcpToolRecord -> 
 
-        // checkIngredientAvailability tool
-        JsonObject ingredientTool = new JsonObject()
-        ingredientTool.addProperty("name", "checkIngredientAvailability")
-        ingredientTool.addProperty("description", "Check if a specific ingredient is available in the inventory")
+            // tool method            
+            JsonObject currentTool = new JsonObject()
+            currentTool.addProperty("name", mcpToolRecord.toolName)
+            currentTool.addProperty("description", mcpToolRecord.toolDescription)
+
+            // input
+            JsonObject inputSchema = new JsonObject()
+            inputSchema.addProperty("type", "object")
+ 
+                // parameters
+                JsonObject properties = new JsonObject()
+                mcpToolRecord.params.each { param ->
+                    JsonObject property = new JsonObject()
+                    property.addProperty("type", param.type)
+                    property.addProperty("description", param.description)
+                    properties.add(param.name, property)
+                }
+       
+            inputSchema.add("properties", properties)
         
-        JsonObject inputSchema = new JsonObject()
-        inputSchema.addProperty("type", "object")
-        
-        JsonObject properties = new JsonObject()
-        JsonObject nameProperty = new JsonObject()
-        nameProperty.addProperty("type", "string")
-        nameProperty.addProperty("description", "The name of the ingredient to check")
-        properties.add("name", nameProperty)
-        
-        inputSchema.add("properties", properties)
-        
-        JsonArray required = new JsonArray()
-        required.add("name")
-        inputSchema.add("required", required)
-        
-        ingredientTool.add("inputSchema", inputSchema)
-        tools.add(ingredientTool)
+            //JsonArray required = new JsonArray()
+            //required.add("name")
+            //inputSchema.add("required", required)
+            
+            currentTool.add("inputSchema", inputSchema)
+            tools.add(currentTool)
+        }
 
         JsonObject result = new JsonObject()
         result.add("tools", tools)
@@ -188,21 +188,6 @@ class CrafterMcpServer extends HttpServlet {
         out.println(gson.toJson(response))
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Handle tool calls
     private void handleToolCall(JsonElement id, JsonObject params, PrintWriter out) {
         String toolName = params.get("name").getAsString()
         JsonObject arguments = params.has("arguments") ? params.get("arguments").getAsJsonObject() : new JsonObject()
@@ -213,127 +198,38 @@ class CrafterMcpServer extends HttpServlet {
         response.addProperty("jsonrpc", "2.0")
         response.add("id", id)
 
-        switch (toolName) {
-            case "checkIngredientAvailability":
-                handleCheckIngredientAvailability(response, arguments)
-                break
-            default:
-                sendError(out, id, -32602, "Invalid tool: $toolName")
-                return
+        McpTool toolToCall = null;
+        mcpTools.each { toolRecord ->
+            if(toolRecord.toolName.equals(toolName)) {
+                toolToCall = toolRecord
+            }
+        }
+
+        if(!toolToCall) {
+            sendError(out, id, -32602, "Invalid tool: $toolName")
+            return
+        }
+        else {
+            System.out.println("CALLING TOOL --->  $toolName")
+            def argValue = (""+params["arguments"]["ingrdient"]).replaceAll("\"","")
+            def toolResponse = new foo.RecipeService().isIngredientAvailable(argValue) //toolToCall.call(params)
+
+            JsonArray content = new JsonArray()
+            JsonObject textContent = new JsonObject()
+            textContent.addProperty("type", "text")
+            textContent.addProperty("text", toolResponse)
+            content.add(textContent)
+
+            JsonObject result = new JsonObject()
+            result.add("content", content)
+            //result.addProperty("isAvailable", isAvailable)
+            response.add("result", result)
         }
 
         out.println(gson.toJson(response))
         logger.info("Sent tool call response: ${gson.toJson(response)}")
     }
 
-    // Sample ingredient inventory - you can replace this with database calls or external API calls
-    private static final Set<String> availableIngredients = [
-        "flour", "sugar", "butter", "milk", "vanilla", "chocolate", "salt", 
-        "baking powder", "olive oil", "garlic", "onion", "tomatoes", "cheese", 
-        "chicken", "beef", "rice", "basil", "oregano"
-    ].toSet()
-
-    private void handleCheckIngredientAvailability(JsonObject response, JsonObject arguments) {
-        String ingredientName = arguments.has("name") ? arguments.get("name").getAsString().toLowerCase().trim() : ""
-        
-        if (ingredientName.isEmpty()) {
-            JsonArray content = new JsonArray()
-            JsonObject textContent = new JsonObject()
-            textContent.addProperty("type", "text")
-            textContent.addProperty("text", "Error: ingredient name is required")
-            content.add(textContent)
-
-            JsonObject result = new JsonObject()
-            result.add("content", content)
-            response.add("result", result)
-            return
-        }
-
-        boolean isAvailable = availableIngredients.contains(ingredientName)
-        
-        JsonArray content = new JsonArray()
-        JsonObject textContent = new JsonObject()
-        textContent.addProperty("type", "text")
-        textContent.addProperty("text", "Ingredient '${ingredientName}' is ${isAvailable ? 'available' : 'not available'} in inventory.")
-        content.add(textContent)
-
-        JsonObject result = new JsonObject()
-        result.add("content", content)
-        result.addProperty("isAvailable", isAvailable)
-        response.add("result", result)
-        
-        logger.info("Ingredient check: '${ingredientName}' -> ${isAvailable}")
-    }
-
-    // Handle resource read requests
-    private void handleResourceRead(JsonElement id, JsonObject params, PrintWriter out) {
-        String uri = params.get("uri").getAsString()
-        JsonObject response = new JsonObject()
-        response.addProperty("jsonrpc", "2.0")
-        response.add("id", id)
-
-        if ("file://example.txt" == uri) {
-            JsonArray content = new JsonArray()
-            JsonObject textContent = new JsonObject()
-            textContent.addProperty("type", "text")
-            textContent.addProperty("text", "This is a sample text file content.")
-            content.add(textContent)
-
-            JsonObject result = new JsonObject()
-            result.add("content", content)
-            response.add("result", result)
-        } else {
-            sendError(out, id, -32602, "Invalid resource URI: $uri")
-            return
-        }
-
-        out.println(gson.toJson(response))
-    }
-
-    // Handle prompts list request
-    private void handlePromptsList(JsonElement id, PrintWriter out) {
-        JsonObject response = new JsonObject()
-        response.addProperty("jsonrpc", "2.0")
-        response.add("id", id)
- 
-        JsonArray prompts = new JsonArray()
-        JsonObject prompt = new JsonObject()
-        prompt.addProperty("name", "welcome")
-        prompt.addProperty("description", "Welcome message prompt")
-        prompts.add(prompt)
-
-        JsonObject result = new JsonObject()
-        result.add("prompts", prompts)
-        response.add("result", result)
-
-        out.println(gson.toJson(response))
-    }
-
-    // Handle events/check request
-    private void handleEventsCheck(JsonElement id, PrintWriter out) {
-        JsonObject response = new JsonObject()
-        response.addProperty("jsonrpc", "2.0")
-        response.add("id", id)
-
-        // Simulate a listChanged notification as a synchronous response
-        JsonObject result = new JsonObject()
-        JsonArray notifications = new JsonArray()
-        JsonObject notification = new JsonObject()
-        notification.addProperty("method", "listChanged")
-        JsonObject params = new JsonObject()
-        JsonArray uris = new JsonArray()
-        uris.add("file://example.txt")
-        params.add("uris", uris)
-        notification.add("params", params)
-        notifications.add(notification)
-        result.add("notifications", notifications)
-
-        response.add("result", result)
-        out.println(gson.toJson(response))
-        logger.info("Sent events/check response: ${gson.toJson(response)}")
-    }
-
-    // Handle shutdown request
     private void handleShutdown(JsonElement id, PrintWriter out) {
         JsonObject response = new JsonObject()
         response.addProperty("jsonrpc", "2.0")
@@ -343,7 +239,6 @@ class CrafterMcpServer extends HttpServlet {
         shutdown()
     }
 
-    // Send JSON-RPC error response
     private void sendError(PrintWriter out, JsonElement id, int code, String message) {
         JsonObject response = new JsonObject()
         response.addProperty("jsonrpc", "2.0")
@@ -358,7 +253,6 @@ class CrafterMcpServer extends HttpServlet {
         logger.warn("Sent error response: code=$code, message=$message")
     }
 
-    // Send JSON-RPC error response with HTTP status
     private void sendError(HttpServletResponse resp, JsonElement id, int code, String message) throws IOException {
         resp.setContentType("application/json")
         resp.setCharacterEncoding("UTF-8")
@@ -367,9 +261,53 @@ class CrafterMcpServer extends HttpServlet {
         }
     }
 
-    // Shutdown the server
     private void shutdown() {
         running = false
         logger.info("Server shut down")
     }
 }
+
+
+
+
+// package foo
+
+// import java.util.function.Function
+
+// public class IsIngredientAvailableFunction implements Function<String, String> {
+    
+//     public RecipeService recipeService
+//     public RecipeService getRecipeService() { return recipeService }
+//     public void setRecipeService(RecipeService value) { recipeService = value }
+
+
+//     public IsIngredientAvailableFunction() { }
+
+//     public String apply(String value) {
+//         return recipeService.isIngredientAvailable(value)
+//     }
+// }
+
+    // def checkAvailabilityFuncCallWrapper = FunctionCallbackWrapper.builder(new CheckAvailabilityTool())
+    // .withName("CheckAvailability")
+    // .withDescription("Returns true if rooms are available")
+    // .withResponseConverter((response) -> "" + response.available())
+    // .build()
+
+
+    // public class CheckAvailabilityTool implements Function<CheckAvailabilityTool.Request, CheckAvailabilityTool.Response> {
+
+    //     public CheckAvailabilityTool() {}
+    //     public CheckAvailabilityTool(boolean available) {}
+        
+    //     public record Request(String date) {}
+    //     public record Response(CheckAvailabilityTool tool, java.lang.Boolean available) {}
+
+    //     @Override
+    //     public Response apply(Request request) {
+            
+    //         return new Response(true)
+    //     }
+    // }
+
+//}
