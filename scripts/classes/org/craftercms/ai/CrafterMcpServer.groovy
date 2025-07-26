@@ -210,8 +210,13 @@ class CrafterMcpServer {
             return
         }
         else {
-            def argValue = (""+params["arguments"]["ingrdient"]).replaceAll("\"","")
-            def toolResponse = toolToCall.call([argValue])
+            def callArgs = []
+            toolToCall.params.each { arg ->
+                def argValue = ("" + params["arguments"][arg.name]).replaceAll("\"","")
+                callArgs.add(argValue)
+            }
+
+            def toolResponse = toolToCall.call(callArgs)
 
             JsonArray content = new JsonArray()
             JsonObject textContent = new JsonObject()
