@@ -1,7 +1,6 @@
 package org.craftercms.ai
 
 @Grab('com.google.code.gson:gson:2.10.1')
-@Grab(group='org.springframework.ai', module='spring-ai-client-chat', version='1.0.0', initClass=false, systemClassLoader=true)
 
 import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
@@ -20,9 +19,6 @@ import com.google.gson.JsonObject
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import java.util.function.Function
-import org.springframework.ai.tool.function.FunctionToolCallback
 
 class CrafterMcpServer {
 
