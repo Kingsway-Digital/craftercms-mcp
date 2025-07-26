@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 import java.util.function.Function
 import org.springframework.ai.tool.function.FunctionToolCallback
 
-class CrafterMcpServer extends HttpServlet {
+class CrafterMcpServer {
 
     private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class)
     private static final Gson gson = new Gson()
