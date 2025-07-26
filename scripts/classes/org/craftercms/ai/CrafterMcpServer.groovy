@@ -210,9 +210,8 @@ class CrafterMcpServer extends HttpServlet {
             return
         }
         else {
-            System.out.println("CALLING TOOL --->  $toolName")
             def argValue = (""+params["arguments"]["ingrdient"]).replaceAll("\"","")
-            def toolResponse = new foo.RecipeService().isIngredientAvailable(argValue) //toolToCall.call(params)
+            def toolResponse = toolToCall.call([argValue])
 
             JsonArray content = new JsonArray()
             JsonObject textContent = new JsonObject()

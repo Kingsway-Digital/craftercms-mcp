@@ -14,8 +14,6 @@ public class RecipeService {
 
         String response = "Ingredient '${ingredientName}' is ${isAvailable ? 'available' : 'not available'} in inventory."
 
-        System.out.println("!!!!!!!!!!!!!!! " + response)
-
         return response
     }
 }   
