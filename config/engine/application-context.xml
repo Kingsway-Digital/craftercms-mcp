@@ -14,7 +14,7 @@
     <property name="methodName" value="isIngredientAvailable" />
     <property name="toolName" value="isIngredientAvailable" />
     <property name="toolDescription" value="returns a responsee indicating if an ingredient is available or not" />
-    <property name="returnType" value="String" />
+    <property name="returnType" value="string" />
     <property name="params">
       <list>
         <bean name="param1" class="org.craftercms.ai.McpTool.ToolParam">
@@ -25,14 +25,32 @@
         </bean>
       </list>
     </property>
+  </bean>
 
+  <bean name="toolGetTempature" class="org.craftercms.ai.McpToolRest">
+    <property name="baseUrl" value="http://localhost:8080" />
+    <property name="url" value="/api/foo/tempature.json" />
+    <property name="toolName" value="getTempature" />
+    <property name="toolDescription" value="Returns the tempature" />
+    <property name="returnType" value="string" />
+    <property name="params">
+      <list>
+        <bean name="param1" class="org.craftercms.ai.McpTool.ToolParam">
+          <property name="name" value="city" />
+          <property name="type" value="string" />
+          <property name="description" value="The name of the city to check" />
+          <property name="required" value="true" />
+        </bean>
+      </list>
+    </property>
   </bean>
 
   <!-- MCP Server -->
   <bean name="crafterMcpServer" class="org.craftercms.ai.CrafterMcpServer">
     <property name="mcpTools">
       <list>
-        <ref bean="toolIsIngredientAvail"/>
+        <ref bean="toolIsIngredientAvail" />
+        <ref bean="toolGetTempature" />
       </list>
     </property>
   </bean>

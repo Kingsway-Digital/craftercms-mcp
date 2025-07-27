@@ -382,7 +382,7 @@ class CustomResponseErrorHandler implements ResponseErrorHandler {
             errorMessage += ": ${errorBody}"
         }
         
-        logger.error("OpenAI API error: ${errorMessage}")
+        System.out.println("OpenAI API error: ${errorMessage}")
         throw new RuntimeException("OpenAI API error: ${errorMessage}")
     }
 }

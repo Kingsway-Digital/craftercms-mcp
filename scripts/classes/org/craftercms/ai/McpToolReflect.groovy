@@ -7,11 +7,10 @@ class McpToolReflect extends McpTool {
     def methodName
 
      public Object call(args) {
-
         Class<?> clazz = serviceObject.getClass()
         Method method = clazz.getMethod(methodName, String.class)
-        def result = method.invoke(serviceObject, args)
 
+        def result = method.invoke(serviceObject, args[0])
         return result
      }  
 

@@ -28,7 +28,7 @@ class CrafterMcpServer {
     private boolean running
     private ArrayList<McpTool> mcpTools = []    
 
-    public ArrayList<FunctionToolCallback> getMcpTools() { return mcpTools }
+    public ArrayList<McpTool> getMcpTools() { return mcpTools }
     public void setMcpTools(ArrayList<McpTool> value) { mcpTools = value }
 
     CrafterMcpServer() {
