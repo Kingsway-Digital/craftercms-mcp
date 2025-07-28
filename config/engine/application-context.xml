@@ -56,6 +56,7 @@
   </bean>  
 
   <bean name="toolSpringBeanScanner" class="org.craftercms.ai.ToolSpringBeanScanner" init-method="scan">
+      <property name="mcpServer" ref="crafterMcpServer" />
   </bean>
 
 </beans>
