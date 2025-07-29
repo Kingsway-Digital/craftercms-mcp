@@ -222,7 +222,6 @@ class CrafterMcpServer {
 
             JsonObject result = new JsonObject()
             result.add("content", content)
-            //result.addProperty("isAvailable", isAvailable)
             response.add("result", result)
         }
 
@@ -266,48 +265,3 @@ class CrafterMcpServer {
         logger.info("Server shut down")
     }
 }
-
-
-
-
-// package foo
-
-// import java.util.function.Function
-
-// public class IsIngredientAvailableFunction implements Function<String, String> {
-    
-//     public RecipeService recipeService
-//     public RecipeService getRecipeService() { return recipeService }
-//     public void setRecipeService(RecipeService value) { recipeService = value }
-
-
-//     public IsIngredientAvailableFunction() { }
-
-//     public String apply(String value) {
-//         return recipeService.isIngredientAvailable(value)
-//     }
-// }
-
-    // def checkAvailabilityFuncCallWrapper = FunctionCallbackWrapper.builder(new CheckAvailabilityTool())
-    // .withName("CheckAvailability")
-    // .withDescription("Returns true if rooms are available")
-    // .withResponseConverter((response) -> "" + response.available())
-    // .build()
-
-
-    // public class CheckAvailabilityTool implements Function<CheckAvailabilityTool.Request, CheckAvailabilityTool.Response> {
-
-    //     public CheckAvailabilityTool() {}
-    //     public CheckAvailabilityTool(boolean available) {}
-        
-    //     public record Request(String date) {}
-    //     public record Response(CheckAvailabilityTool tool, java.lang.Boolean available) {}
-
-    //     @Override
-    //     public Response apply(Request request) {
-            
-    //         return new Response(true)
-    //     }
-    // }
-
-//}

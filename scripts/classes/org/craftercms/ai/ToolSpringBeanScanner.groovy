@@ -82,23 +82,23 @@ class ToolSpringBeanScanner implements ApplicationContextAware {
         mcpTool.methodName = method.getName()
         mcpTool.toolName =  declareToolAnnotation.toolName()
         mcpTool.toolDescription = declareToolAnnotation.toolDescription()
-        mcpTool.returnType = "string"
+        mcpTool.returnType = declareToolAnnotation.returnType()
         
         mcpTool.params = []
-        def param1 = new org.craftercms.ai.McpTool.ToolParam()
-        param1.name = "flight"
-        param1.type = "string"
-        param1.description = "flight"
-        param1.required = true
 
-        def param2 = new org.craftercms.ai.McpTool.ToolParam()
-        param2.name = "seat"
-        param2.type = "string"
-        param2.description = "seat"
-        param2.required = true
+        DeclareToolParam[] toolParamAnnotations = method.getAnnotationsByType(DeclareToolParam.class);
 
-        mcpTool.params.add(param1)
-        mcpTool.params.add(param2)
+        toolParamAnnotations.each { paramAnnotation ->
+            logger.info("processing param '${paramAnnotation.name()}' ")
+
+            def param = new org.craftercms.ai.McpTool.ToolParam()
+            param.name = paramAnnotation.name()
+            param.type = paramAnnotation.type()
+            param.description = paramAnnotation.description()
+            param.required = true
+
+            mcpTool.params.add(param)
+        }
 
         /* add the tool to the server */
         mcpServer.mcpTools.add(mcpTool)

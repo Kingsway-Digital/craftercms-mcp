@@ -45,6 +45,21 @@
     </property>
   </bean>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   <!-- MCP Server -->
   <bean name="crafterMcpServer" class="org.craftercms.ai.CrafterMcpServer">
     <property name="mcpTools">
