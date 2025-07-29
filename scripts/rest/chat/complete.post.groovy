@@ -14,7 +14,7 @@ import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
-import org.springframework.web.client.ResponseErrorHandler
+import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.http.client.ClientHttpResponse
 
 import org.craftercms.ai.mcp.client.McpSyncClient
@@ -78,7 +78,7 @@ def buildOpenAiChatModel() {
     }
 
     def webClientBuilder = WebClient.builder()
-    def responseErrorHandler = new CustomResponseErrorHandler()
+    def responseErrorHandler = new DefaultResponseErrorHandler()
     
     def headers = new LinkedMultiValueMap<String, String>()
     headers.add("Content-Type", "application/json")
@@ -125,37 +125,4 @@ def buildMcpClient() {
         .build()
 
     return new McpSyncClient(restClient)
-}
-
-
-
-/**
- * Custom error handler for OpenAI API responses
- */
-class CustomResponseErrorHandler implements ResponseErrorHandler {
-
-    boolean hasError(ClientHttpResponse response) throws IOException {
-        return response.getStatusCode().is4xxClientError() ||
-               response.getStatusCode().is5xxServerError()
-    }
-
-    void handleError(ClientHttpResponse response) throws IOException {
-        def statusCode = response.getStatusCode()
-        def statusText = response.getStatusText()
-        
-        def errorBody = ""
-        try {
-            errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8)
-        } catch (Exception e) {
-            // If we can't read the body, continue with basic error info
-        }
-        
-        def errorMessage = "HTTP ${statusCode.value()} ${statusText}"
-        if (errorBody) {
-            errorMessage += ": ${errorBody}"
-        }
-        
-        System.out.println("OpenAI API error: ${errorMessage}")
-        throw new RuntimeException("OpenAI API error: ${errorMessage}")
-    }
 }
