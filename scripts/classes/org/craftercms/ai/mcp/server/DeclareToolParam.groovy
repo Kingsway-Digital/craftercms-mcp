@@ -1,4 +1,4 @@
-package org.craftercms.ai
+package org.craftercms.ai.mcp.server
 
 import java.lang.annotation.*
 
@@ -10,9 +10,9 @@ public @interface DeclareToolParam {
     String type() 
     String description()
 }
-
+ 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface DeclareToolParams {
-    DeclareToolParam[] value();
+    DeclareToolParam[] value()
 }

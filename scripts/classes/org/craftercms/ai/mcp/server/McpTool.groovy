@@ -1,4 +1,4 @@
-package org.craftercms.ai
+package org.craftercms.ai.mcp.server
 
 abstract class McpTool {
     def toolName

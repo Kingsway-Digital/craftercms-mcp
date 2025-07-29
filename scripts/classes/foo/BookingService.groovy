@@ -1,9 +1,9 @@
 package foo
 
-import org.craftercms.ai.DeclareTool
-import org.craftercms.ai.DeclareToolParam
-
-
+import org.craftercms.ai.mcp.server.DeclareTool
+import org.craftercms.ai.mcp.server.DeclareToolParam
+ 
+ 
 public class BookingService {
  
     @DeclareTool(toolName="bookFlight", returnType="string", toolDescription="Book a specific seat on a given flight" )

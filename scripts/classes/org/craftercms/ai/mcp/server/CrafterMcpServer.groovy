@@ -1,4 +1,4 @@
-package org.craftercms.ai
+package org.craftercms.ai.mcp.server
 
 @Grab('com.google.code.gson:gson:2.10.1')
 
@@ -16,7 +16,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-
+ 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

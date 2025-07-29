@@ -1,4 +1,4 @@
-package org.craftercms.ai
+package org.craftercms.ai.mcp.server
 
 
 import org.slf4j.Logger
@@ -91,7 +91,7 @@ class ToolSpringBeanScanner implements ApplicationContextAware {
         toolParamAnnotations.each { paramAnnotation ->
             logger.info("processing param '${paramAnnotation.name()}' ")
 
-            def param = new org.craftercms.ai.McpTool.ToolParam()
+            def param = new McpTool.ToolParam()
             param.name = paramAnnotation.name()
             param.type = paramAnnotation.type()
             param.description = paramAnnotation.description()

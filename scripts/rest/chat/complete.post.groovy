@@ -1,14 +1,5 @@
-@Grab(group='io.modelcontextprotocol.sdk', module='mcp', version='0.10.0', initClass=false, systemClassLoader=true)
 @Grab(group='org.springframework.ai', module='spring-ai-client-chat', version='1.0.0', initClass=false, systemClassLoader=true)
-@Grab(group='org.springframework.ai', module='spring-ai-mcp', version='1.0.0', initClass=false, systemClassLoader=true)
 @Grab(group='org.springframework.ai', module='spring-ai-openai', version='1.0.0', initClass=false, systemClassLoader=true)
-@Grab(group='com.fasterxml.jackson.core', module='jackson-databind', version='2.17.2', initClass=false)
-@Grab(group='io.projectreactor', module='reactor-core', version='3.6.0', initClass=false)
-@Grab(group='org.eclipse.jetty', module='jetty-server', version='11.0.24')
-
-import java.time.Duration
-import java.io.IOException
-import java.nio.charset.StandardCharsets
 
 import groovy.json.JsonSlurper
 
@@ -18,24 +9,16 @@ import org.springframework.web.client.RestClient.Builder
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.util.LinkedMultiValueMap
 
+import org.springframework.ai.chat.client.ChatClient
+
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.web.client.ResponseErrorHandler
 import org.springframework.http.client.ClientHttpResponse
 
-import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.tool.ToolCallbackProvider
-import org.springframework.ai.tool.definition.ToolDefinition
-
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.ai.model.ApiKey
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-
+import org.craftercms.ai.mcp.client.McpSyncClient
+import org.craftercms.ai.mcp.client.McpToolCallbackProvider
 
 def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
@@ -51,18 +34,15 @@ logger.info("Processing query: ${query}")
 
 try {
     // Initialize MCP client
-    def mcpClient = buildMcpClient(logger)
-    logger.info("MCP client built successfully")
+    def mcpClient = buildMcpClient()
     
     // Initialize MCP client
     def mcpClientInitResult = mcpClient.initialize()
-    logger.info("MCP client initialized successfully: ${mcpClientInitResult}")
 
     // Initialize OpenAI ChatClient with our custom MCP tool provider
     def chatModel = buildOpenAiChatModel()
-    def toolCallbackProvider = new CustomMcpToolCallbackProvider(mcpClient, logger)
+    def toolCallbackProvider = new McpToolCallbackProvider(mcpClient, logger)
     
-    // FIXED: Use defaultToolCallbacks() instead of defaultTools()
     def chatClient = ChatClient.builder(chatModel)
         .defaultToolCallbacks(toolCallbackProvider)
         .build()
@@ -76,9 +56,9 @@ try {
     logger.info("Chat response generated successfully: ${chatResponse}")
     return [response: chatResponse]
 
-} catch (Exception e) {
-    logger.error("Error processing request: ${e.message}")
-    return [error: "Internal server error: ${e.message}"]
+} catch (Exception err) {
+    logger.error("Error processing request: ${err.message}")
+    return [error: "Internal server error: ${err.message}"]
 }
 
 /**
@@ -129,13 +109,11 @@ def buildOpenAiChatModel() {
 /**
  * Build MCP client with synchronous HTTP configuration
  */
-def buildMcpClient(logger) {
+def buildMcpClient() {
     def siteId = "mcp"
     def mcpServerUrl = "http://localhost:8080/"
     def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
     
-    def objMapper = new ObjectMapper()
-
     def restClient = RestClient.builder()
         .baseUrl(mcpServerUrl)
         .defaultHeaders { headers ->
@@ -146,215 +124,10 @@ def buildMcpClient(logger) {
         }
         .build()
 
-    return new CustomMcpSyncClient(restClient, objMapper, logger)
+    return new McpSyncClient(restClient)
 }
 
-/**
- * Custom MCP Sync Client that implements synchronous HTTP communication
- */
-class CustomMcpSyncClient {
-    private final RestClient restClient
-    private final ObjectMapper objectMapper
-    def logger
-    private boolean initialized = false
 
-    CustomMcpSyncClient( restClient,  objectMapper,  logger) {
-        this.restClient = restClient
-        this.objectMapper = objectMapper
-        this.logger = logger
-    }
-
-    def initialize() {
-        def request = [
-            jsonrpc: "2.0",
-            method: "initialize",
-            params: [
-                clientInfo: [
-                    name: "mcp-client",
-                    version: "1.0.0"
-                ],
-                clientCapabilities: [
-                    roots: true,
-                    sampling: true
-                ]
-            ],
-            id: UUID.randomUUID().toString()
-        ]
-
-        logger.info("Sending initialize request: ${objectMapper.writeValueAsString(request)}")
-        
-        def response = restClient.post()
-            .uri("/api/craftermcp/mcp.json")
-            .body(request)
-            .retrieve()
-            .toEntity(Map.class)
-
-        logger.info("Received initialize response: ${objectMapper.writeValueAsString(response.body)}")
-        
-        if (response.body.error) {
-            throw new RuntimeException("Initialize failed: ${response.body.error.message}")
-        }
-        
-        initialized = true
-        return response.body.result
-    }
-
-    def listTools() {
-        if (!initialized) {
-            throw new IllegalStateException("Client not initialized")
-        }
-
-        def request = [
-            jsonrpc: "2.0",
-            method: "tools/list",
-            params: [:],
-            id: UUID.randomUUID().toString()
-        ]
-
-        logger.info("Sending listTools request: ${objectMapper.writeValueAsString(request)}")
-        
-        def response = restClient.post()
-            .uri("/api/craftermcp/mcp.json")
-            .body(request)
-            .retrieve()
-
-        def responseObj = response.toEntity(Map.class)
-
-        return responseObj.body.result
-    }
-
-    def callTool(String toolName, Map parameters) {
-
-        if (!initialized) {
-            throw new IllegalStateException("Client not initialized")
-        }
-
-        def request = [
-            jsonrpc: "2.0",
-            method: "tools/call",
-            params: [
-                name: toolName,
-                arguments: parameters
-            ],
-            id: UUID.randomUUID().toString()
-        ]
-
-        logger.info("Sending callTool request: ${objectMapper.writeValueAsString(request)}")
-        
-        def response = restClient.post()
-            .uri("/api/craftermcp/mcp.json")
-            .body(request)
-            .retrieve()
-            .toEntity(Map.class)
-
-        logger.info("Received callTool response: ${objectMapper.writeValueAsString(response.body)}")
-        
-        if (response.body.error) {
-            throw new RuntimeException("Tool call failed: ${response.body.error.message}")
-        }
-        
-        return response.body.result
-    }
-
-    boolean isInitialized() {
-        return initialized
-    }
-}
-
-/**
- * Custom Tool Callback Provider that integrates our MCP client with Spring AI
- */
-class CustomMcpToolCallbackProvider implements ToolCallbackProvider {
-    private final CustomMcpSyncClient mcpClient
-    def logger
-
-    CustomMcpToolCallbackProvider( mcpClient,  logger) {
-        this.mcpClient = mcpClient
-        this.logger = logger
-    }
-
-    ToolCallback[] getToolCallbacks() {
-        if (!mcpClient.isInitialized()) {
-            logger.warn("MCP client not initialized, returning empty tool list")
-            return new ToolCallback[0]
-        }
-
-
-        def toolResults = []
-        
-        try {
-            def toolsList = mcpClient.listTools()
-
-            def tools = toolsList.tools ?: []
-            
-            logger.info("Found ${tools.size()} tools from MCP server")
-        
-            tools.each { tool ->
-                def toolCb = new ClientToolCallback()
-                toolCb.name = tool.name
-                toolCb.description = tool.description
-                toolCb.client = mcpClient
- 
-                def jsonBuilder = new groovy.json.JsonBuilder(tool.inputSchema)
-                toolCb.inputSchema = jsonBuilder.toPrettyString()
-                toolResults.add(toolCb)
-            }
-            
-            return toolResults
-            
-        } catch (Exception e) {
-            logger.error("Error listing MCP tools: ${e.message}")
-            return new ToolCallback[0]
-        }
-    }
-}
-
-public class ClientToolCallback implements ToolCallback {
-
-    def name
-    def description
-    def inputSchema
-    def client 
-
-    String getName() {
-        return name
-    }
-
-    String getDescription() {
-        return description ?: "MCP tool: ${name}"
-    }
-
-    ToolDefinition getToolDefinition() {
-        // Create a basic tool definition from MCP tool schema
-        return ToolDefinition.builder()
-            .name(name)
-            .description(description ?: "MCP tool: ${name}")
-            .inputSchema(inputSchema ?: [:])
-            .build()
-    }
-
-    String call(String arguments) {
-
-        try {            
-            // Parse arguments JSON
-            def argMap = [:]
-            
-            if (arguments && arguments.trim()) {
-                argMap = new groovy.json.JsonSlurper().parseText(arguments)
-            }
-
-            
-            def result = client.callTool(name, argMap)
-            def response = result.content ?: result.output ?: result.toString()
-            
-            return response
-            
-        } catch (Exception e) {
-            return "Error calling tool: ${e.message}"
-        }
-    }
-    
-}
 
 /**
  * Custom error handler for OpenAI API responses
