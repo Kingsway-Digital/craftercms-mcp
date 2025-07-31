@@ -3,22 +3,27 @@
 
 import groovy.json.JsonSlurper
 
-import org.springframework.http.HttpHeaders
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.RestClient.Builder
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.util.LinkedMultiValueMap
-
 import org.springframework.ai.chat.client.ChatClient
 
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
-import org.springframework.web.client.DefaultResponseErrorHandler
+
+import org.springframework.util.LinkedMultiValueMap
+
+import org.springframework.http.HttpHeaders
 import org.springframework.http.client.ClientHttpResponse
+
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClient.Builder
+import org.springframework.web.client.DefaultResponseErrorHandler
+
+import org.springframework.web.reactive.function.client.WebClient
 
 import org.craftercms.ai.mcp.client.McpSyncClient
 import org.craftercms.ai.mcp.client.McpToolCallbackProvider
+
+def openAIKey = System.getenv("crafter_chatgpt")
 
 def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
@@ -34,15 +39,16 @@ logger.info("Processing query: ${query}")
 
 try {
     // Initialize MCP client
-    def mcpClient = buildMcpClient()
+    def mcpClient = buildMcpClient("mcp", request)
     
     // Initialize MCP client
     def mcpClientInitResult = mcpClient.initialize()
 
     // Initialize OpenAI ChatClient with our custom MCP tool provider
-    def chatModel = buildOpenAiChatModel()
-    def toolCallbackProvider = new McpToolCallbackProvider(mcpClient, logger)
+    def chatModel = buildOpenAiChatModel(openAIKey)
+    def toolCallbackProvider = new McpToolCallbackProvider(mcpClient)
     
+    // Add our MCP server tools provider to the chat client
     def chatClient = ChatClient.builder(chatModel)
         .defaultToolCallbacks(toolCallbackProvider)
         .build()
@@ -64,9 +70,9 @@ try {
 /**
  * Build OpenAI Chat Model with proper configuration
  */
-def buildOpenAiChatModel() {
-    def apiKeyValue = System.getenv("crafter_chatgpt")
-    if (!apiKeyValue) {
+def buildOpenAiChatModel(openAIKey) {
+
+    if (!openAIKey) {
         throw new IllegalStateException("OpenAI API key not found in environment variable 'crafter_chatgpt'")
     }
 
@@ -86,7 +92,7 @@ def buildOpenAiChatModel() {
 
     def openAiApi = OpenAiApi.builder()
         .baseUrl("https://api.openai.com/v1")
-        .apiKey(apiKeyValue)
+        .apiKey(openAIKey)
         .completionsPath("/chat/completions")
         .headers(headers)
         .restClientBuilder(restClientBuilder)
@@ -94,6 +100,7 @@ def buildOpenAiChatModel() {
         .responseErrorHandler(responseErrorHandler)
         .build()
 
+    // adjust model params as needed
     def openAiChatOptions = OpenAiChatOptions.builder()
         .model("gpt-4o-mini")
         .temperature(0.7)
@@ -108,9 +115,10 @@ def buildOpenAiChatModel() {
 
 /**
  * Build MCP client with synchronous HTTP configuration
+ * Assumes mcp server is a crafter mcp server on the same machine and handles preview 
  */
-def buildMcpClient() {
-    def siteId = "mcp"
+def buildMcpClient(currentSiteId, request) {
+    def siteId = currentSiteId
     def mcpServerUrl = "http://localhost:8080/"
     def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
     

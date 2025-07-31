@@ -5,16 +5,19 @@ package org.craftercms.ai.mcp.client
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.tool.ToolCallbackProvider
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 /**
  * Tool Callback Provider that integrates our MCP client with Spring AI
  */
 class McpToolCallbackProvider implements ToolCallbackProvider {
     private final McpSyncClient mcpClient
-    def logger
 
-    McpToolCallbackProvider( mcpClient,  logger) {
+    private static final Logger logger = LoggerFactory.getLogger(McpToolCallbackProvider.class)
+
+    McpToolCallbackProvider( mcpClient) {
         this.mcpClient = mcpClient
-        this.logger = logger
     }
 
     ToolCallback[] getToolCallbacks() {
