@@ -9,15 +9,19 @@ import jakarta.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +34,7 @@ class CrafterMcpServer {
     private volatile boolean running;
     private ArrayList<McpTool> mcpTools = [];
     private LinkedBlockingQueue<JsonObject> streamQueue = new LinkedBlockingQueue<>();
+    private Map<String, Set<String>> subscriptions = new ConcurrentHashMap<>();
 
     public ArrayList<McpTool> getMcpTools() { return mcpTools; }
     public void setMcpTools(ArrayList<McpTool> value) { mcpTools = value; }
@@ -48,23 +53,53 @@ class CrafterMcpServer {
             return;
         }
 
+        // Log Authorization header
+        String authHeader = req.getHeader("Authorization");
+        if (authHeader != null) {
+            logger.info("Received Authorization header: {}", authHeader);
+        } else {
+            logger.warn("No Authorization header received");
+        }
+
+        // Read request body
         StringBuilder jsonInput = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
                 jsonInput.append(line);
             }
+        } catch (IOException e) {
+            logger.error("Failed to read request body: {}", e.getMessage(), e);
+            sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
+            return;
+        }
+
+        String jsonString = jsonInput.toString();
+        logger.info("Received POST request: {}", jsonString);
+        if (jsonString.trim().isEmpty()) {
+            logger.warn("Empty request body received");
+            sendError(resp, null, -32600, "Invalid Request: Empty request body");
+            return;
         }
 
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
+        resp.setHeader("Connection", "close");
 
         try (PrintWriter out = resp.getWriter()) {
-            logger.info("Received POST request: $jsonInput");
-            handleRequest(jsonInput.toString(), out, false);
-        } catch (Exception e) {
-            logger.error("Server error: ${e.getMessage()}");
-            sendError(resp, null, -32000, "Server error: ${e.getMessage()}");
+            JsonObject response = handleRequest(jsonString, null);
+            if (response == null) {
+                logger.error("handleRequest returned null for input: {}", jsonString);
+                sendError(resp, null, -32603, "Internal error: Null response from handler");
+                return;
+            }
+            String responseString = gson.toJson(response);
+            out.print(responseString);
+            out.flush();
+            logger.info("Sent response: {}", responseString);
+        } catch (IOException e) {
+            logger.error("IO error in doPost: {}", e.getMessage(), e);
+            sendError(resp, null, -32000, "Server error: {}", e.getMessage());
         }
     }
 
@@ -76,50 +111,103 @@ class CrafterMcpServer {
             return;
         }
 
-        // Set headers for SSE
-        resp.setContentType("text/event-stream");
-        resp.setCharacterEncoding("UTF-8");
-        resp.setHeader("Cache-Control", "no-cache");
-        resp.setHeader("Connection", "keep-alive");
+        // Log Authorization header
+        String authHeader = req.getHeader("Authorization");
+        if (authHeader != null) {
+            logger.info("Received Authorization header: {}", authHeader);
+        } else {
+            logger.warn("No Authorization header received");
+        }
 
+        // Set headers for JSON response
+        resp.setContentType("application/json");
+        resp.setHeader("Connection", "close");
+        resp.setCharacterEncoding("UTF-8");
+
+        logger.info("Sending response headers: Content-Type=application/json, Connection=close");
+
+        // Read request body
         StringBuilder jsonInput = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
                 jsonInput.append(line);
+                logger.debug("Received streaming data: {}", line);
             }
-        }
-
-        try (PrintWriter out = resp.getWriter()) {
-            logger.info("Received streaming POST request: $jsonInput");
-            handleRequest(jsonInput.toString(), out, true);
-            
-            // Keep stream alive for events
-            while (running) {
-                JsonObject event = streamQueue.poll(1, TimeUnit.SECONDS);
-                if (event != null) {
-                    out.write("data: ${gson.toJson(event)}\n\n");
-                    out.flush();
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Streaming error: ${e.getMessage()}");
-        }
-    }
-
-    // Regular HTTP GET
-    void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!running) {
-            resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            logger.warn("GET request rejected: Server is shutting down");
+        } catch (IOException e) {
+            logger.error("Failed to read streaming request body: {}", e.getMessage(), e);
+            sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
             return;
         }
 
-        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        logger.warn("Invalid GET request path: ${req.getServletPath()}");
+        String jsonString = jsonInput.toString();
+        logger.info("Received streaming POST request: {}", jsonString);
+        if (jsonString.trim().isEmpty()) {
+            logger.warn("Empty streaming request body received");
+            sendError(resp, null, -32600, "Invalid Request: Empty request body");
+            return;
+        }
+
+        String subscriptionId = UUID.randomUUID().toString();
+        Set<String> defaultEvents = new HashSet<>();
+        defaultEvents.add("all");
+        subscriptions.put(subscriptionId, defaultEvents);
+
+        try (PrintWriter out = resp.getWriter()) {
+            // Create JSON array for response
+            JsonArray responseArray = new JsonArray();
+
+            // Add connection/established notification
+            JsonObject initNotification = new JsonObject();
+            initNotification.addProperty("jsonrpc", "2.0");
+            initNotification.addProperty("method", "connection/established");
+            JsonObject initParams = new JsonObject();
+            initParams.addProperty("subscriptionId", subscriptionId);
+            initNotification.add("params", initParams);
+            responseArray.add(initNotification);
+            logger.info("Prepared connection/established for {}: {}", subscriptionId, gson.toJson(initNotification));
+
+            // Handle initialize request
+            JsonObject initializeResponse = handleRequest(jsonString, subscriptionId);
+            if (initializeResponse == null) {
+                logger.error("handleRequest returned null for initialize request: {}", jsonString);
+                sendError(resp, null, -32603, "Internal error: Null response from handler");
+                return;
+            }
+            responseArray.add(initializeResponse);
+            logger.info("Prepared initialize response for {}: {}", subscriptionId, gson.toJson(initializeResponse));
+
+            // Add roots/listChanged event
+            JsonObject rootsNotification = new JsonObject();
+            rootsNotification.addProperty("jsonrpc", "2.0");
+            rootsNotification.addProperty("method", "roots/listChanged");
+            JsonObject rootsParams = new JsonObject();
+            JsonArray rootsList = new JsonArray();
+            JsonObject root1 = new JsonObject();
+            root1.addProperty("id", "root1");
+            root1.addProperty("name", "Root One");
+            root1.addProperty("path", "/api/craftermcp");
+            root1.addProperty("type", "folder");
+            rootsList.add(root1);
+            rootsParams.add("roots", rootsList);
+            rootsNotification.add("params", rootsParams);
+            responseArray.add(rootsNotification);
+            logger.info("Prepared roots/listChanged event for {}: {}", subscriptionId, gson.toJson(rootsNotification));
+
+            // Send JSON array response
+            String responseMessage = gson.toJson(responseArray);
+            out.print(responseMessage);
+            out.flush();
+            logger.info("Sent JSON array response for {}: {}", subscriptionId, responseMessage);
+        } catch (IOException e) {
+            logger.error("Streaming error for {}: {}", subscriptionId, e.getMessage(), e);
+        } finally {
+            subscriptions.remove(subscriptionId);
+            logger.info("Closed streaming connection for {}", subscriptionId);
+        }
     }
 
-    // Streaming HTTP GET
+    // Streaming HTTP GET (for subscriptions, if needed)
     void doGetStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!running) {
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -127,68 +215,101 @@ class CrafterMcpServer {
             return;
         }
 
-        // Set headers for SSE
-        resp.setContentType("text/event-stream");
+        String authHeader = req.getHeader("Authorization");
+        if (authHeader != null) {
+            logger.info("Received Authorization header: {}", authHeader);
+        } else {
+            logger.warn("No Authorization header received");
+        }
+
+        resp.setContentType("application/json");
+        resp.setHeader("Connection", "close");
         resp.setCharacterEncoding("UTF-8");
-        resp.setHeader("Cache-Control", "no-cache");
-        resp.setHeader("Connection", "keep-alive");
+
+        logger.info("Sending response headers: Content-Type=application/json, Connection=close");
+
+        String subscriptionId = UUID.randomUUID().toString();
+        Set<String> defaultEvents = new HashSet<>();
+        defaultEvents.add("all");
+        subscriptions.put(subscriptionId, defaultEvents);
 
         try (PrintWriter out = resp.getWriter()) {
-            // Send initial connection confirmation
-            JsonObject initEvent = new JsonObject();
-            initEvent.addProperty("event", "connection");
-            initEvent.addProperty("status", "connected");
-            out.write("data: ${gson.toJson(initEvent)}\n\n");
+            JsonArray responseArray = new JsonArray();
+            JsonObject rootsNotification = new JsonObject();
+            rootsNotification.addProperty("jsonrpc", "2.0");
+            rootsNotification.addProperty("method", "roots/listChanged");
+            JsonObject rootsParams = new JsonObject();
+            JsonArray rootsList = new JsonArray();
+            JsonObject root1 = new JsonObject();
+            root1.addProperty("id", "root1");
+            root1.addProperty("name", "Root One");
+            root1.addProperty("path", "/api/craftermcp");
+            root1.addProperty("type", "folder");
+            rootsList.add(root1);
+            rootsParams.add("roots", rootsList);
+            rootsNotification.add("params", rootsParams);
+            responseArray.add(rootsNotification);
+            String responseMessage = gson.toJson(responseArray);
+            out.print(responseMessage);
             out.flush();
-
-            // Stream events
-            while (running) {
-                JsonObject event = streamQueue.poll(1, TimeUnit.SECONDS);
-                if (event != null) {
-                    out.write("data: ${gson.toJson(event)}\n\n");
-                    out.flush();
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Streaming GET error: ${e.getMessage()}");
+            logger.info("Sent roots/listChanged event for {}: {}", subscriptionId, responseMessage);
+        } catch (IOException e) {
+            logger.error("Streaming error for {}: {}", subscriptionId, e.getMessage(), e);
+        } finally {
+            subscriptions.remove(subscriptionId);
+            logger.info("Closed streaming connection for {}", subscriptionId);
         }
     }
 
-    private void handleRequest(String jsonInput, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleRequest(String jsonInput, String subscriptionId) {
         try {
+            if (jsonInput == null || jsonInput.trim().isEmpty()) {
+                logger.warn("Empty or null JSON input");
+                return createErrorResponse(null, -32600, "Invalid Request: Empty or null JSON input");
+            }
             JsonObject request = gson.fromJson(jsonInput, JsonObject.class);
+            if (request == null || !request.has("jsonrpc") || !request.get("jsonrpc").getAsString().equals("2.0")) {
+                logger.warn("Invalid JSON-RPC request: {}", jsonInput);
+                return createErrorResponse(null, -32600, "Invalid Request: Must be JSON-RPC 2.0");
+            }
+            if (!request.has("method")) {
+                logger.warn("Missing method in JSON-RPC request: {}", jsonInput);
+                return createErrorResponse(null, -32600, "Invalid Request: Missing method");
+            }
             String method = request.get("method").getAsString();
             JsonElement id = request.get("id");
             JsonObject params = request.has("params") ? request.get("params").getAsJsonObject() : new JsonObject();
 
-            logger.info("Processing JSON-RPC method: $method, id: $id");
+            logger.info("Processing JSON-RPC method: {}, id: {}", method, id);
 
             switch (method) {
                 case "initialize":
-                    handleInitialize(id, out, isStreaming);
-                    break;
+                    return handleInitialize(id);
                 case "tools/list":
-                    handleToolsList(id, out, isStreaming);
-                    break;
+                    return handleToolsList(id);
                 case "tools/call":
-                    handleToolCall(id, params, out, isStreaming);
-                    break;
+                    return handleToolCall(id, params);
                 case "events/check":
-                    handleEventsCheck(id, out, isStreaming);
-                    break;
+                    return handleEventsCheck(id);
+                case "subscribe":
+                    return handleSubscribe(id, params, subscriptionId);
+                case "unsubscribe":
+                    return handleUnsubscribe(id, params, subscriptionId);
                 case "shutdown":
-                    handleShutdown(id, out, isStreaming);
-                    break;
+                    return handleShutdown(id);
                 default:
-                    sendError(out, id, -32601, "Method not found: $method", isStreaming);
+                    return createErrorResponse(id, -32601, "Method not found: " + method);
             }
+        } catch (JsonParseException e) {
+            logger.error("JSON parse error: {}", e.getMessage(), e);
+            return createErrorResponse(null, -32700, "Parse error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Parse error: ${e.getMessage()}");
-            sendError(out, null, -32700, "Parse error: ${e.getMessage()}", isStreaming);
+            logger.error("Unexpected error processing request: {}", e.getMessage(), e);
+            return createErrorResponse(null, -32603, "Internal error: " + e.getMessage());
         }
     }
 
-    private void handleInitialize(JsonElement id, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleInitialize(JsonElement id) {
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
@@ -205,20 +326,21 @@ class CrafterMcpServer {
         capabilities.addProperty("resources", true);
         capabilities.addProperty("prompts", true);
         capabilities.addProperty("streaming", true);
+        capabilities.addProperty("subscriptions", true);
         result.add("capabilities", capabilities);
+        result.addProperty("subscriptionUrl", "/api/craftermcp/stream.json");
         response.add("result", result);
 
-        sendResponse(out, response, isStreaming);
-        logger.info("Sent initialize response: ${gson.toJson(response)}");
+        logger.info("Generated initialize response: {}", gson.toJson(response));
+        return response;
     }
 
-    private void handleToolsList(JsonElement id, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleToolsList(JsonElement id) {
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
 
         JsonArray tools = new JsonArray();
-
         mcpTools.each { mcpToolRecord ->
             JsonObject currentTool = new JsonObject();
             currentTool.addProperty("name", mcpToolRecord.toolName);
@@ -244,29 +366,29 @@ class CrafterMcpServer {
         result.add("tools", tools);
         response.add("result", result);
 
-        sendResponse(out, response, isStreaming);
+        logger.info("Generated tools/list response: {}", gson.toJson(response));
+        return response;
     }
 
-    private void handleToolCall(JsonElement id, JsonObject params, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleToolCall(JsonElement id, JsonObject params) {
         String toolName = params.get("name").getAsString();
         JsonObject arguments = params.has("arguments") ? params.get("arguments").getAsJsonObject() : new JsonObject();
-        
-        logger.info("Calling tool: $toolName with arguments: ${gson.toJson(arguments)}");
-        
+
+        logger.info("Calling tool: {} with arguments: {}", toolName, gson.toJson(arguments));
+
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
 
         McpTool toolToCall = null;
         mcpTools.each { toolRecord ->
-            if(toolRecord.toolName.equals(toolName)) {
+            if (toolRecord.toolName.equals(toolName)) {
                 toolToCall = toolRecord;
             }
         }
 
-        if(!toolToCall) {
-            sendError(out, id, -32602, "Invalid tool: $toolName", isStreaming);
-            return;
+        if (!toolToCall) {
+            return createErrorResponse(id, -32602, "Invalid tool: " + toolName);
         } else {
             def callArgs = [];
             toolToCall.params.each { arg ->
@@ -287,41 +409,74 @@ class CrafterMcpServer {
             response.add("result", result);
         }
 
-        sendResponse(out, response, isStreaming);
-        logger.info("Sent tool call response: ${gson.toJson(response)}");
+        logger.info("Generated tool/call response: {}", gson.toJson(response));
+        return response;
     }
 
-    private void handleEventsCheck(JsonElement id, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleSubscribe(JsonElement id, JsonObject params, String subscriptionId) {
+        if (subscriptionId == null) {
+            return createErrorResponse(id, -32602, "Subscription ID required for streaming");
+        }
+
+        JsonArray events = params.has("events") ? params.get("events").getAsJsonArray() : new JsonArray();
+        Set<String> eventSet = new HashSet<>();
+        events.each { event -> eventSet.add(event.getAsString()) };
+
+        if (eventSet.isEmpty()) {
+            eventSet.add("all");
+        }
+
+        subscriptions.put(subscriptionId, eventSet);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+        JsonObject result = new JsonObject();
+        result.addProperty("subscriptionId", subscriptionId);
+        response.add("result", result);
+
+        logger.info("Subscription created: {} for events: {}", subscriptionId, eventSet);
+        return response;
+    }
+
+    private JsonObject handleUnsubscribe(JsonElement id, JsonObject params, String subscriptionId) {
+        if (subscriptionId == null) {
+            return createErrorResponse(id, -32602, "Subscription ID required for streaming");
+        }
+
+        subscriptions.remove(subscriptionId);
+
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
         response.add("result", new JsonObject());
-        sendResponse(out, response, isStreaming);
+
+        logger.info("Subscription removed: {}", subscriptionId);
+        return response;
     }
 
-    private void handleShutdown(JsonElement id, PrintWriter out, boolean isStreaming) {
+    private JsonObject handleEventsCheck(JsonElement id) {
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+        JsonObject result = new JsonObject();
+        result.addProperty("subscriptionUrl", "/api/craftermcp/stream.json");
+        response.add("result", result);
+        logger.info("Generated events/check response: {}", gson.toJson(response));
+        return response;
+    }
+
+    private JsonObject handleShutdown(JsonElement id) {
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
         response.add("result", new JsonObject());
-        sendResponse(out, response, isStreaming);
         shutdown();
+        logger.info("Generated shutdown response: {}", gson.toJson(response));
+        return response;
     }
 
-    private void sendResponse(PrintWriter out, JsonObject response, boolean isStreaming) {
-        String jsonResponse = gson.toJson(response);
-        if (isStreaming) {
-            out.write("data: $jsonResponse\n\n");
-            out.flush();
-        } else {
-            out.println(jsonResponse);
-        }
-        if (!isStreaming) {
-            streamQueue.offer(response); // Add to stream queue for streaming clients
-        }
-    }
-
-    private void sendError(PrintWriter out, JsonElement id, int code, String message, boolean isStreaming) {
+    private JsonObject createErrorResponse(JsonElement id, int code, String message) {
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         if (id != null) {
@@ -331,26 +486,43 @@ class CrafterMcpServer {
         error.addProperty("code", code);
         error.addProperty("message", message);
         response.add("error", error);
-        
-        sendResponse(out, response, isStreaming);
-        logger.warn("Sent error response: code=$code, message=$message");
+
+        logger.warn("Generated error response: code={}, message={}", code, message);
+        return response;
+    }
+
+    private void sendResponse(PrintWriter out, JsonObject response, boolean isStreaming) {
+        String jsonResponse = gson.toJson(response);
+        out.print(isStreaming ? jsonResponse + "\n" : jsonResponse);
+        out.flush();
+        logger.info("Sent response: {}", jsonResponse);
     }
 
     private void sendError(HttpServletResponse resp, JsonElement id, int code, String message) throws IOException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
         try (PrintWriter out = resp.getWriter()) {
-            sendError(out, id, code, message, false);
+            sendResponse(out, createErrorResponse(id, code, message), false);
         }
     }
 
     private void shutdown() {
         running = false;
         logger.info("Server shut down");
-        // Notify streaming clients
-        JsonObject shutdownEvent = new JsonObject();
-        shutdownEvent.addProperty("event", "shutdown");
-        shutdownEvent.addProperty("message", "Server is shutting down");
-        streamQueue.offer(shutdownEvent);
+        JsonObject shutdownNotification = new JsonObject();
+        shutdownNotification.addProperty("jsonrpc", "2.0");
+        shutdownNotification.addProperty("method", "server/shutdown");
+        JsonObject params = new JsonObject();
+        params.addProperty("message", "Server is shutting down");
+        shutdownNotification.add("params", params);
+        streamQueue.offer(shutdownNotification);
+        subscriptions.clear();
+    }
+
+    private boolean isSubscribed(String subscriptionId, JsonObject event) {
+        String eventType = event.has("method") ? event.get("method").getAsString().split("/")[0] :
+                          (event.has("event") ? event.get("event").getAsString() : "");
+        Set<String> subscribedEvents = subscriptions.get(subscriptionId);
+        return subscribedEvents != null && (subscribedEvents.contains("all") || subscribedEvents.contains(eventType));
     }
 }
