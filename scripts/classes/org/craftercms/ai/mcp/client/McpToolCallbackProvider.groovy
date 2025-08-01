@@ -38,6 +38,8 @@ class McpToolCallbackProvider implements ToolCallbackProvider {
         
             tools.each { tool ->
                 def toolCb = new ClientToolCallback()
+                logger.info(" --->  ${tool.name}")
+
                 toolCb.name = tool.name
                 toolCb.description = tool.description
                 toolCb.client = mcpClient
@@ -46,7 +48,7 @@ class McpToolCallbackProvider implements ToolCallbackProvider {
                 toolCb.inputSchema = jsonBuilder.toPrettyString()
                 toolResults.add(toolCb)
             }
-            
+            System.out.println(toolResults)
             return toolResults
             
         } catch (Exception e) {

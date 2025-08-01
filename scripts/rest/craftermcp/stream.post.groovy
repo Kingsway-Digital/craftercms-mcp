@@ -7,5 +7,5 @@ response.setHeader("Transfer-Encoding", "chunked")
 response.setHeader("Cache-Control", "no-cache")
 response.setHeader("Connection", "keep-alive")
 
-server.doPost(request, response)   
+server.doPostStreaming(request, response)   
 

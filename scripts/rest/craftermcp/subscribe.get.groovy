@@ -1,2 +1,2 @@
 def server = applicationContext["crafterMcpServer"]
-server.doGet(request, response)   
+server.doGetStreaming(request, response)   

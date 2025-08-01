@@ -4,6 +4,7 @@
 import groovy.json.JsonSlurper
 
 import org.springframework.ai.chat.client.ChatClient
+import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor
 
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
@@ -45,9 +46,11 @@ try {
     def mcpClientInitResult = mcpClient.initialize()
 
     // Initialize OpenAI ChatClient with our custom MCP tool provider
+    System.out.println("${openAIKey}")
     def chatModel = buildOpenAiChatModel(openAIKey)
     def toolCallbackProvider = new McpToolCallbackProvider(mcpClient)
     
+    System.out.println(chatModel)
     // Add our MCP server tools provider to the chat client
     def chatClient = ChatClient.builder(chatModel)
         .defaultToolCallbacks(toolCallbackProvider)
@@ -94,7 +97,7 @@ def buildOpenAiChatModel(openAIKey) {
         .baseUrl("https://api.openai.com/v1")
         .apiKey(openAIKey)
         .completionsPath("/chat/completions")
-        .headers(headers)
+        // .headers(headers)
         .restClientBuilder(restClientBuilder)
         .webClientBuilder(webClientBuilder)
         .responseErrorHandler(responseErrorHandler)
@@ -102,9 +105,9 @@ def buildOpenAiChatModel(openAIKey) {
 
     // adjust model params as needed
     def openAiChatOptions = OpenAiChatOptions.builder()
-        .model("gpt-4o-mini")
-        .temperature(0.7)
-        .maxTokens(1000)
+        .model("o4-mini-2025-04-16")
+        //.temperature(0.7)
+        //.maxTokens(1000)
         .build()
 
     return OpenAiChatModel.builder()

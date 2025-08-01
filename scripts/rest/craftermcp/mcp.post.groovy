@@ -1,3 +1,3 @@
 
 def server = applicationContext["crafterMcpServer"]
-server.doPostNormal(request, response)   
+server.doPost(request, response)   
