@@ -29,6 +29,8 @@ def openAIKey = System.getenv("crafter_chatgpt")
 def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
 def query = requestBody.message
+def siteId = siteContext.siteName
+def previewToken = siteConfig.getString("ai.crafterPreviewToken")
 
 
 if (!query) {
@@ -40,7 +42,7 @@ logger.info("Processing query: ${query}")
 
 try {
     // Initialize MCP client
-    def mcpClient = buildMcpClient("mcp", request)
+    def mcpClient = buildMcpClient(siteId, previewToken, request)
     
     // Initialize MCP client
     def mcpClientInitResult = mcpClient.initialize()
@@ -120,11 +122,10 @@ def buildOpenAiChatModel(openAIKey) {
  * Build MCP client with synchronous HTTP configuration
  * Assumes mcp server is a crafter mcp server on the same machine and handles preview 
  */
-def buildMcpClient(currentSiteId, request) {
+def buildMcpClient(currentSiteId, previewToken, request) {
     def siteId = currentSiteId
     def mcpServerUrl = "http://localhost:8080/"
-    def previewToken = "CCE-V1#5qFpTjXlyPDsrq5FGMCJSA3oDo1DTgK/qYQXFUBSe1zxHpoZFXf30uWCU6eRgefl"
-    
+
     def restClient = RestClient.builder()
         .baseUrl(mcpServerUrl)
         .defaultHeaders { headers ->
