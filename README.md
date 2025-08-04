@@ -6,6 +6,6 @@ This project demonstrates how to create a MCP server using CrafterCMS and expose
 ## Installation & Configuration
 
 1. Install the project
-2. Create an environment variable called "crafter_chatgpt" which is the API key for OpenAI 4o mini (one day this name will be changed to align with what it's actually the key for, but today is not that day)
+2. Create an environment variable called `crafter_chatgpt` which is the API key for OpenAI 4o mini (one day this name will be changed to align with what it's actually the key for, but today is not that day)
 3. Create a Crafter Preview token and set it in `/config/engine/site-config.xml` as `site.ai.crafterPreviewToken`. Don't forget to encrypt it!
 4. 
