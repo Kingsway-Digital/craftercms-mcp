@@ -1,0 +1,72 @@
+// Build.gradle project that declares source directories and dependencies
+// for a typical CrafterCMS project.
+// This is designed to facilitate IDE integration and is not suitable for
+// running project builds.
+// One day this may be replaced by a craftercms ide plugin.
+
+plugins {
+    id 'groovy'
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+
+// declare where your crafter installation is deployed here. This allows runtime dependencies to be pulled in from here.
+String crafterInstallDirectory = '/Volumes/Projects/AI/crafter442E'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    // import dependencies from your crafter installation - common
+    implementation files('${crafterInstallDirectory}/bin/groovy')
+    implementation fileTree(dir: '${crafterInstallDirectory/bin/apache-tomcat/bin/lib', include: '*.jar')
+    implementation files('${crafterInstallDirectory}/bin/apache-tomcat/lib')
+    implementation files('${crafterInstallDirectory}/bin/apache-tomcat/shared/classes')
+    implementation fileTree(dir: '${crafterInstallDirectory/bin/apache-tomcat/shared/lib', include: '*.jar')
+
+    // root webapp
+    implementation fileTree(dir: '${crafterInstallDirectory/bin/apache-tomcat/webapps/ROOT/WEB-INF/lib', include: '*.jar')
+    implementation files('${crafterInstallDirectory}/bin/apache-tomcat/webapps/ROOT/WEB-INF/classes')
+
+    // studio webapp
+    implementation fileTree(dir: '${crafterInstallDirectory/bin/apache-tomcat/webapps/studio/WEB-INF/lib', include: '*.jar')
+    implementation files('${crafterInstallDirectory}/bin/apache-tomcat/webapps/studio/WEB-INF/classes')
+
+    // servlet spec
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+
+    // groovy
+    implementation 'org.apache.groovy:groovy:4.0.4'
+
+    // core crafter files (ideally this would replace ALL of the above dependencies)
+    implementation 'org.craftercms:craftercms:4.3.2'
+
+    // project-specific files
+    implementation 'org.springframework.ai:spring-ai-client-chat:1.0.0'
+    implementation 'org.springframework.ai:spring-ai-openai:1.0.0'
+    implementation 'org.springframework.ai:spring-ai-mcp:1.0.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = [
+                    'config/studio/scripts/classes',
+                    'scripts/classes',
+            ]
+        }
+        resources {
+            srcDirs = ['config/engine', 'config/plugins', 'config/studio']
+        }
+    }
+}

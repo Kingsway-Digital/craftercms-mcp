@@ -5,6 +5,11 @@
 # Gradle
 .gradle/*
 
+# gradle scripts - not used for this project
+gradle
+gradlew
+gradlew.bat
+
 # Mac ignore list
 .DS_Store
 
