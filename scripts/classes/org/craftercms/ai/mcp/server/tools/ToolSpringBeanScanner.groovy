@@ -1,4 +1,4 @@
-package org.craftercms.ai.mcp.server
+package org.craftercms.ai.mcp.server.tools
 
 
 import org.slf4j.Logger
@@ -13,6 +13,8 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.beans.BeansException
 
 import java.lang.reflect.Method
+
+import org.craftercms.ai.mcp.server.CrafterMcpServer;
 
 class ToolSpringBeanScanner implements ApplicationContextAware {
 

@@ -9,7 +9,7 @@
   <bean name="bookingService" class="foo.BookingService" />
 
   <!-- Tools -->
-  <bean name="toolIsIngredientAvail" class="org.craftercms.ai.mcp.server.McpToolReflect">
+  <bean name="toolIsIngredientAvail" class="org.craftercms.ai.mcp.server.tools.McpToolReflect">
     <property name="serviceObject" ref="recipeService" />
     <property name="methodName" value="isIngredientAvailable" />
     <property name="toolName" value="isIngredientAvailable" />
@@ -17,7 +17,7 @@
     <property name="returnType" value="string" />
     <property name="params">
       <list>
-        <bean name="param1" class="org.craftercms.ai.mcp.server.McpTool.ToolParam">
+        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
           <property name="name" value="ingrdient" />
           <property name="type" value="string" />
           <property name="description" value="The name of the ingredient to check" />
@@ -27,7 +27,7 @@
     </property>
   </bean>
 
-  <bean name="toolGetTemperature" class="org.craftercms.ai.mcp.server.McpToolRest">
+  <bean name="toolGetTemperature" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
     <property name="baseUrl" value="http://localhost:8080" />
     <property name="url" value="/api/foo/temperature.json" />
     <property name="toolName" value="getTemperature" />
@@ -35,7 +35,7 @@
     <property name="returnType" value="string" />
     <property name="params">
       <list>
-        <bean name="param1" class="org.craftercms.ai.mcp.server.McpTool.ToolParam">
+        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
           <property name="name" value="city" />
           <property name="type" value="string" />
           <property name="description" value="The name of the city to check" />
@@ -70,7 +70,7 @@
     </property>
   </bean>  
 
-  <bean name="toolSpringBeanScanner" class="org.craftercms.ai.mcp.server.ToolSpringBeanScanner" init-method="scan">
+  <bean name="toolSpringBeanScanner" class="org.craftercms.ai.mcp.server.tools.ToolSpringBeanScanner" init-method="scan">
       <property name="mcpServer" ref="crafterMcpServer" />
   </bean>
 

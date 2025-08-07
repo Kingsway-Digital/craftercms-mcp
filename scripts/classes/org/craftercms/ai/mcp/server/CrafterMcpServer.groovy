@@ -26,24 +26,43 @@ import com.google.gson.JsonParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.craftercms.ai.mcp.server.tools.*;
+import org.craftercms.ai.mcp.server.resources.*;
+import org.craftercms.ai.mcp.server.prompts.*;
+
 class CrafterMcpServer {
 
     private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class);
     private static final Gson gson = new Gson();
     private String serverId;
     private volatile boolean running;
-    private ArrayList<McpTool> mcpTools = [];
     private LinkedBlockingQueue<JsonObject> streamQueue = new LinkedBlockingQueue<>();
     private Map<String, Set<String>> subscriptions = new ConcurrentHashMap<>();
     private Map<String, String> sessions = new ConcurrentHashMap<>(); // Track sessions
 
+    private ArrayList<McpTool> mcpTools = [];
     public ArrayList<McpTool> getMcpTools() { return mcpTools; }
     public void setMcpTools(ArrayList<McpTool> value) { mcpTools = value; }
+
+    private ArrayList<McpResource> mcpResources = [];
+    public ArrayList<McpResource> getMcpResources() { return mcpResources; }
+    public void setMcpResources(ArrayList<McpResource> value) { mcpResources = value; }
+
+    private ArrayList<McpResourceTemplate> mcpResourceTemplates = [];
+    public ArrayList<McpResourceTemplate> getMcpResourceTemplates() { return mcpResourceTemplates; }
+    public void setMcpResourceTemplates(ArrayList<McpResourceTemplate> value) { mcpResourceTemplates = value; }
+
+    private ArrayList<McpPrompt> mcpPrompts = [];
+    public ArrayList<McpPrompt> getMcpPrompts() { return mcpPrompts; }
+    public void setMcpPrompts(ArrayList<McpPrompt> value) { mcpPrompts = value; }
 
     CrafterMcpServer() {
         this.serverId = UUID.randomUUID().toString();
         this.running = true;
         this.mcpTools = [];
+        this.mcpResources = [];
+        this.mcpResourceTemplates = [];
+        this.mcpPrompts = [];
     }
 
     // Handle CORS preflight requests
@@ -310,6 +329,10 @@ class CrafterMcpServer {
                     return handleRootsList(id);
                 case "resources/list":
                     return handleResourcesList(id);
+                case "resources/templates/list":
+                    return handleResourceTemplatesList(id);
+                case "prompts/get": 
+                    return "TODO"
                 case "prompts/list":
                     return handlePromptsList(id);
                 case "notifications/list":
@@ -320,6 +343,8 @@ class CrafterMcpServer {
                     return handleUnsubscribe(id, params, sessionId);
                 case "shutdown":
                     return handleShutdown(id);
+                case "ping":
+                    return handlePing(id, sessionId);                    
                 default:
                     return createErrorResponse(id, -32601, "Method not found: " + method);
             }
@@ -406,7 +431,7 @@ class CrafterMcpServer {
         JsonArray resources = new JsonArray();
         JsonObject resource1 = new JsonObject();
         resource1.addProperty("uri", "/api/craftermcp");
-        resource1.addProperty("name", "CrafterCMS MCP Root");
+        resource1.addProperty("name", "Example Resource");
         resources.add(resource1);
 
         JsonObject result = new JsonObject();
@@ -417,14 +442,37 @@ class CrafterMcpServer {
         return response;
     }
 
+    private JsonObject handleResourceTemplatesList(JsonElement id) {
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+
+        JsonArray templates = new JsonArray();
+        JsonObject template1 = new JsonObject();
+        template1.addProperty("uriTemplate", "/api/craftermcp");
+        template1.addProperty("name", "Example Resource Template");
+        templates.add(template1);
+
+        JsonObject result = new JsonObject();
+        result.add("resourceTemplates", templates);
+        response.add("result", result);
+
+        logger.info("Generated resources/templates/list response: {}", gson.toJson(response));
+        return response;
+    }
+
+    
     private JsonObject handlePromptsList(JsonElement id) {
         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
 
         JsonArray prompts = new JsonArray();
-        // Add your prompts here if any
+        JsonObject prompt1 = new JsonObject();
+        prompt1.addProperty("prompt", "A Prompt");
+        prompt1.addProperty("name", "An example prompt.");
 
+        prompts.add(prompt1); 
         JsonObject result = new JsonObject();
         result.add("prompts", prompts);
         response.add("result", result);
@@ -634,4 +682,16 @@ class CrafterMcpServer {
         Set<String> subscribedEvents = subscriptions.get(subscriptionId);
         return subscribedEvents != null && (subscribedEvents.contains("all") || subscribedEvents.contains(eventType));
     }
+
+
+    private JsonObject handlePing(JsonElement id, String sessionId) {
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+        response.add("result", new JsonObject());
+
+        logger.info("Generated Ping response for session {}: {}", sessionId, gson.toJson(response));
+        return response;
+    }
+
 }

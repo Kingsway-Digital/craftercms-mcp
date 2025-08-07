@@ -1,7 +1,7 @@
 package foo
 
-import org.craftercms.ai.mcp.server.DeclareTool
-import org.craftercms.ai.mcp.server.DeclareToolParam
+import org.craftercms.ai.mcp.server.tools.DeclareTool
+import org.craftercms.ai.mcp.server.tools.DeclareToolParam
  
  
 public class BookingService {
