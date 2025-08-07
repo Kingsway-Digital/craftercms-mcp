@@ -45,10 +45,25 @@
     </property>
   </bean>
 
+  <!-- Resources -->
+  <bean name="resourceExample" class="org.craftercms.ai.mcp.server.resources.McpResource">
+    <property name="name" value="Example Resource" />
+    <property name="description" value="An example resource" />
+    <property name="uri" value="http://craftercms.com" />
+  </bean>
 
+  <!-- Resource Templates -->
+  <bean name="resourceTemplateExample" class="org.craftercms.ai.mcp.server.resources.McpResourceTemplate">
+    <property name="name" value="Example Resource Template" />
+    <property name="description" value="An example resource template" />
+    <property name="uriTemplate" value="http://craftercms.com/blog?id={blogId}" />
+  </bean>
 
-
-
+  <!-- Prompts -->
+  <bean name="promptExample" class="org.craftercms.ai.mcp.server.prompts.McpPrompt">
+    <property name="name" value="Example Prompt" />
+    <property name="promptTemplate" value="Hello world! What day is it?" />
+  </bean>
 
 
 
@@ -66,6 +81,24 @@
       <list>
         <ref bean="toolIsIngredientAvail" />
         <ref bean="toolGetTemperature" />
+      </list>
+    </property>
+
+    <property name="mcpResources">
+      <list>
+        <ref bean="resourceExample" />
+      </list>
+    </property>
+
+    <property name="mcpResourceTemplates">
+      <list>
+        <ref bean="resourceTemplateExample" />
+      </list>
+    </property>
+
+    <property name="mcpPrompts">
+      <list>
+        <ref bean="promptExample" />
       </list>
     </property>
   </bean>  

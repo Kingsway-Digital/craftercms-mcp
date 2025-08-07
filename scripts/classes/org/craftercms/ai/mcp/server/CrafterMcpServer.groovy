@@ -332,7 +332,7 @@ class CrafterMcpServer {
                 case "resources/templates/list":
                     return handleResourceTemplatesList(id);
                 case "prompts/get": 
-                    return "TODO"
+                    return handlePromptsGet(id, params);
                 case "prompts/list":
                     return handlePromptsList(id);
                 case "notifications/list":
@@ -429,10 +429,12 @@ class CrafterMcpServer {
         response.add("id", id);
 
         JsonArray resources = new JsonArray();
-        JsonObject resource1 = new JsonObject();
-        resource1.addProperty("uri", "/api/craftermcp");
-        resource1.addProperty("name", "Example Resource");
-        resources.add(resource1);
+        mcpResources.each { resource ->
+            JsonObject resourceObj = new JsonObject();
+            resourceObj.addProperty("uri", resource.uri);
+            resourceObj.addProperty("name", resource.name);
+            resources.add(resourceObj);
+        }
 
         JsonObject result = new JsonObject();
         result.add("resources", resources);
@@ -448,10 +450,12 @@ class CrafterMcpServer {
         response.add("id", id);
 
         JsonArray templates = new JsonArray();
-        JsonObject template1 = new JsonObject();
-        template1.addProperty("uriTemplate", "/api/craftermcp");
-        template1.addProperty("name", "Example Resource Template");
-        templates.add(template1);
+        mcpResourceTemplates.each { template ->
+            JsonObject templateObj = new JsonObject();
+            templateObj.addProperty("uriTemplate", template.uriTemplate);
+            templateObj.addProperty("name", template.name);
+            templates.add(templateObj);
+        }
 
         JsonObject result = new JsonObject();
         result.add("resourceTemplates", templates);
@@ -463,21 +467,48 @@ class CrafterMcpServer {
 
     
     private JsonObject handlePromptsList(JsonElement id) {
-        JsonObject response = new JsonObject();
+         JsonObject response = new JsonObject();
         response.addProperty("jsonrpc", "2.0");
         response.add("id", id);
 
         JsonArray prompts = new JsonArray();
-        JsonObject prompt1 = new JsonObject();
-        prompt1.addProperty("prompt", "A Prompt");
-        prompt1.addProperty("name", "An example prompt.");
+        mcpPrompts.each { prompt ->
+            JsonObject promptObj = new JsonObject();
+            promptObj.addProperty("promptTemplate", prompt.promptTemplate);
+            promptObj.addProperty("name", prompt.name);
+            prompts.add(promptObj);
+        }
 
-        prompts.add(prompt1); 
         JsonObject result = new JsonObject();
         result.add("prompts", prompts);
         response.add("result", result);
 
+
         logger.info("Generated prompts/list response: {}", gson.toJson(response));
+        return response;
+    }
+
+    private JsonObject handlePromptsGet(JsonElement id, JsonObject params) {
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+        
+        String promptName = params.has("name") ? params.get("name").getAsString() : null;
+        if (promptName == null) {
+            return createErrorResponse(id, -32602, "Missing prompt name");
+        }
+        
+        McpPrompt prompt = mcpPrompts.find { it.name.equals(promptName) };
+        if (prompt == null) {
+            return createErrorResponse(id, -32602, "Prompt not found: " + promptName);
+        }
+        
+        JsonObject result = new JsonObject();
+        result.addProperty("prompt", prompt.prompt);
+        result.addProperty("name", prompt.name);
+        response.add("result", result);
+        
+        logger.info("Generated prompts/get response: {}", gson.toJson(response));
         return response;
     }
 
