@@ -504,7 +504,7 @@ class CrafterMcpServer {
         }
         
         JsonObject result = new JsonObject();
-        result.addProperty("prompt", prompt.prompt);
+        result.addProperty("prompt", prompt.promptTemplate);
         result.addProperty("name", prompt.name);
         response.add("result", result);
         
