@@ -404,7 +404,10 @@ class CrafterMcpServer {
         response.add("id", id);
 
         JsonArray resources = new JsonArray();
-        // Add resources here if any
+        JsonObject resource1 = new JsonObject();
+        resource1.addProperty("uri", "/api/craftermcp");
+        resource1.addProperty("name", "CrafterCMS MCP Root");
+        resources.add(resource1);
 
         JsonObject result = new JsonObject();
         result.add("resources", resources);
