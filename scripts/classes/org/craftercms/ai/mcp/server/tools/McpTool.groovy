@@ -13,5 +13,9 @@ abstract class McpTool {
         def required
     }
 
+    public List<String> getRequiredScopes() {
+        return null
+    }
+    
     public abstract Object call(args)   
 }

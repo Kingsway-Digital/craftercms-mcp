@@ -4,7 +4,10 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <!-- My Services-->
+  <!-- special references -->
+  <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer" parent="crafter.properties"/>
+
+    <!-- My Services-->
   <bean name="recipeService" class="foo.RecipeService" />
   <bean name="bookingService" class="foo.BookingService" />
 
@@ -33,6 +36,7 @@
     <property name="toolName" value="getTemperature" />
     <property name="toolDescription" value="Returns the temperature" />
     <property name="returnType" value="string" />
+    <property name="previewToken" value="${ai.crafterPreviewToken}" />
     <property name="params">
       <list>
         <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
@@ -44,6 +48,32 @@
       </list>
     </property>
   </bean>
+
+
+  <bean name="toolGetCrafterGreeting" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
+    <property name="baseUrl" value="http://localhost:8080" />
+    <property name="url" value="/api/foo/greetings.json" />
+    <property name="toolName" value="getCrafterGreeting" />
+    <property name="toolDescription" value="Return how Crafter greets people or the world" />
+    <property name="returnType" value="string" />
+    <property name="previewToken" value="${ai.crafterPreviewToken}" />
+    <property name="params">
+      <list>
+        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
+          <property name="name" value="greetLang" />
+          <property name="type" value="string" />
+          <property name="description" value="The language to check" />
+          <property name="required" value="true" />
+        </bean>
+      </list>
+    </property>
+  </bean>
+
+
+
+
+
+
 
   <!-- Resources -->
   <bean name="resourceExample" class="org.craftercms.ai.mcp.server.resources.McpResource">
@@ -74,13 +104,13 @@
 
 
 
-
   <!-- MCP Server -->
   <bean name="crafterMcpServer" class="org.craftercms.ai.mcp.server.CrafterMcpServer">
     <property name="mcpTools">
       <list>
         <ref bean="toolIsIngredientAvail" />
         <ref bean="toolGetTemperature" />
+        <ref bean="toolGetCrafterGreeting" />
       </list>
     </property>
 
