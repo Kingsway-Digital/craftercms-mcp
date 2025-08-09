@@ -21,4 +21,7 @@
 
 <site>
 	<version>4.0.1</version>
+	<ai>
+	    <crafterPreviewToken encrypted="">ENTER YOUR PREVIEW TOKEN HERE</crafterPreviewToken>
+	</ai>
 </site>
