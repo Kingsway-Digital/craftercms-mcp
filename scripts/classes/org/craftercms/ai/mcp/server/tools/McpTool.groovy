@@ -13,9 +13,13 @@ abstract class McpTool {
         def required
     }
 
-    public List<String> getRequiredScopes() {
-        return null
+    public abstract Object call(args) 
+
+    public String[] getRequiredScopes() {
+        return new String[0];
+    }  
+
+    public String getAuthType() {
+        return "none"
     }
-    
-    public abstract Object call(args)   
 }

@@ -30,7 +30,12 @@ def jsonSlurper = new JsonSlurper()
 def requestBody = jsonSlurper.parseText(request.reader.text)
 def query = requestBody.message
 def siteId = siteContext.siteName
-def previewToken = siteConfig.getString("ai.crafterPreviewToken")
+
+// For now, lets assume that we're getting a preview token to the same server we're running on - this makes it easier to share the project
+// Ultimately, any connection information should come from the config
+// siteConfig.getString("ai.crafterPreviewToken")
+def previewToken = getCookieValue(request, "crafterPreview")
+System.out.println("-----------------> " + previewToken)    
 
 
 if (!query) {
@@ -133,8 +138,21 @@ def buildMcpClient(currentSiteId, previewToken, request) {
             headers.set(HttpHeaders.ACCEPT, "application/json")
             headers.set("X-Crafter-Site", siteId)
             headers.set("X-Crafter-Preview", previewToken)
+            headers.set("Authorization", "X-Crafter-Preview " + previewToken)
+
         }
         .build()
 
     return new McpSyncClient(restClient)
+}
+
+def getCookieValue(request, name) {
+    if (request.getCookies() != null) {
+        for (def cookie : request.getCookies()) {
+            if (name.equals(cookie.getName())) {
+                return cookie.getValue()
+            }
+        }
+    }
+    return null; // not found
 }

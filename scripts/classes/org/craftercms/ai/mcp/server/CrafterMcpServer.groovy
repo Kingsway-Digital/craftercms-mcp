@@ -85,27 +85,24 @@ class CrafterMcpServer {
     // Inner class for credential translation
     class CredentialTranslator {
         String translateCredentials(String userId, String[] scopes, McpTool tool) {
-            try {
-                switch (tool.getAuthType()) {
-                    case "api_key":
-                        String apiKey = tool.getAuthConfig().get("apiKey");
-                        return apiKey != null ? apiKey : "default-api-key";
-                    case "basic_auth":
-                        String username = userId;
-                        String password = tool.getAuthConfig().get("password");
-                        String credentials = username + ":" + password;
-                        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
-                    case "custom_header":
-                        String headerName = tool.getAuthConfig().get("headerName");
-                        String headerValue = tool.getAuthConfig().get("headerValue");
-                        return headerValue != null ? headerValue : userId;
-                    default:
-                        logger.warn("Unsupported auth type for tool {}: {}", tool.getToolName(), tool.getAuthType());
-                        return null;
-                }
-            } catch (Exception e) {
-                logger.error("Tool authorization not actually working quite yet")
-                return null
+            switch (tool.getAuthType()) {
+                case "none":
+                    return "";
+                case "api_key":
+                    String apiKey = tool.getAuthConfig().get("apiKey");
+                    return apiKey != null ? apiKey : "default-api-key";
+                case "basic_auth":
+                    String username = userId;
+                    String password = tool.getAuthConfig().get("password");
+                    String credentials = username + ":" + password;
+                    return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+                case "custom_header":
+                    String headerName = tool.getAuthConfig().get("headerName");
+                    String headerValue = tool.getAuthConfig().get("headerValue");
+                    return headerValue != null ? headerValue : userId;
+                default:
+                    logger.warn("Unsupported auth type for tool {}: {}", tool.getToolName(), tool.getAuthType());
+                    return null;
             }
         }
     }
@@ -156,6 +153,7 @@ class CrafterMcpServer {
         }
 
         String authHeader = req.getHeader("Authorization");
+        StringBuilder jsonInput = new StringBuilder();
 
         String userId
         String[] scopes
@@ -170,24 +168,24 @@ class CrafterMcpServer {
             scopes = {"execute"}
         } else {
             String[] userInfo = validateAccessToken(authHeader, resp);
+
             if (userInfo == null) {
                 return;
             }
             userId = userInfo[0];
             scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
             logger.info("Validated user: {}", userId);
-        }
-        
-        StringBuilder jsonInput = new StringBuilder();
-        try (BufferedReader reader = req.getReader()) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonInput.append(line);
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonInput.append(line);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to read request body: {}", e.getMessage(), e);
+                sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
+                return;
             }
-        } catch (IOException e) {
-            logger.error("Failed to read request body: {}", e.getMessage(), e);
-            sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
-            return;
         }
 
         String jsonString = jsonInput.toString();
@@ -342,6 +340,7 @@ class CrafterMcpServer {
         if (userInfo == null) {
             return;
         }
+        
         String userId = userInfo[0];
         String[] scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
         logger.info("Validated user: {}", userId);
