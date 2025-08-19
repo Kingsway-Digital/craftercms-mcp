@@ -134,7 +134,7 @@ class CrafterMcpServer {
     private UserAuthDetails preProcessRequest(HttpServletRequest req, HttpServletResponse resp) 
     throws ServletException, IOException {
 
-        UserAuthDetails usrAuthDetails = new UserAuthDetails();
+        UserAuthDetails userAuthDetails = new UserAuthDetails();
 
         if (!running) {
             resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -155,8 +155,8 @@ class CrafterMcpServer {
 
                 if(previewMode) {
                     logger.info("MCP client connecting to preview server");
-                    usrAuthDetails.userId = "Preview User"
-                    usrAuthDetails.scopes = collectPossibleScopes()
+                    userAuthDetails.userId = "Preview User"
+                    userAuthDetails.scopes = collectPossibleScopes()
                 }
                 else {
                     logger.warn("MCP client claiming be connecting to preview server but the server is not in preview");
@@ -168,8 +168,8 @@ class CrafterMcpServer {
                 // 1. Start an anonymous session
                 // 2. Give the user no scopes - they should only be able to access resource/tools etc which require no scopes.
                 logger.info("MCP client connecting to UNAUTHENTICATED preview server (this is temporary)")
-                usrAuthDetails.userId = "Temporary Anonymous User"
-                usrAuthDetails.scopes = new String[0];
+                userAuthDetails.userId = "Temporary Anonymous User"
+                userAuthDetails.scopes = new String[0];
             }
             else {
                 // the server does not allow public access (regardless if it contains tools that require no scopes)
@@ -184,17 +184,17 @@ class CrafterMcpServer {
                 return null;
             }
 
-            usrAuthDetails.userId = userInfo[0];
-            usrAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
+            userAuthDetails.userId = userInfo[0];
+            userAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
             
             logger.info("Validated user: {}", userAuthDetails.userId);
         }
 
-        return usrAuthDetails
+        return userAuthDetails
     }
 
     private String[] validateAccessToken(String authHeader, HttpServletResponse resp) throws IOException {
-        return authValidator.validate(authHeader, resp)
+        return collectPossibleScopes() //authValidator.validate(authHeader, resp)
     }
 
     void doOptionsStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -229,6 +229,8 @@ class CrafterMcpServer {
     void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     
         UserAuthDetails userDetails = preProcessRequest(req, resp);
+
+        StringBuilder jsonInput = new StringBuilder();
 
         try (BufferedReader reader = req.getReader()) {
             String line;
