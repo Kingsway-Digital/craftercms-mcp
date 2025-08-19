@@ -53,14 +53,24 @@ import java.util.Base64;
 import org.craftercms.ai.mcp.server.tools.*
 import org.craftercms.ai.mcp.server.resources.*
 import org.craftercms.ai.mcp.server.prompts.*
+import org.craftercms.ai.mcp.server.auth.*
+import org.craftercms.ai.mcp.server.auth.validator.*
 
 class CrafterMcpServer {
 
     private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class);
+
     private static final Gson gson = new Gson();
+  
     private String serverId;
     private volatile boolean running;
+
+    private boolean previewMode
+    public boolean getPreviewMode() { return previewMode; }
+    public void setPreviewMode(boolean value) { previewMode = value }
+
     private LinkedBlockingQueue<JsonObject> streamQueue = new LinkedBlockingQueue<>();
+
     private Map<String, Set<String>> subscriptions = new ConcurrentHashMap<>();
     private Map<String, String> sessions = new ConcurrentHashMap<>();
     private Map<String, Long> sessionCreationTimes = new ConcurrentHashMap<>();
@@ -81,39 +91,110 @@ class CrafterMcpServer {
     public ArrayList<McpPrompt> getMcpPrompts() { return mcpPrompts; }
     public void setMcpPrompts(ArrayList<McpPrompt> value) { mcpPrompts = value; }
 
-
-    // Inner class for credential translation
-    class CredentialTranslator {
-        String translateCredentials(String userId, String[] scopes, McpTool tool) {
-            switch (tool.getAuthType()) {
-                case "none":
-                    return "";
-                case "api_key":
-                    String apiKey = tool.getAuthConfig().get("apiKey");
-                    return apiKey != null ? apiKey : "default-api-key";
-                case "basic_auth":
-                    String username = userId;
-                    String password = tool.getAuthConfig().get("password");
-                    String credentials = username + ":" + password;
-                    return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
-                case "custom_header":
-                    String headerName = tool.getAuthConfig().get("headerName");
-                    String headerValue = tool.getAuthConfig().get("headerValue");
-                    return headerValue != null ? headerValue : userId;
-                default:
-                    logger.warn("Unsupported auth type for tool {}: {}", tool.getToolName(), tool.getAuthType());
-                    return null;
-            }
-        }
-    }
-
+    private boolean allowPublicAccess
+    public boolean getAllowPublicAccess() { return allowPublicAccess }
+    public void setAllowPublicAccess(boolean value) { allowPublicAccess = value }
+ 
+    private AuthValidator authValidator
+    public AuthValidator getAuthValidator() { return authValidator; }
+    public void setAuthValidator(AuthValidator value) { authValidator = value }
+    
     CrafterMcpServer() {
         this.serverId = UUID.randomUUID().toString();
         this.running = true;
+        this.allowPublicAccess = false; // public access disabled by default
         this.mcpTools = new ArrayList<>();
         this.mcpResources = new ArrayList<>();
         this.mcpResourceTemplates = new ArrayList<>();
         this.mcpPrompts = new ArrayList<>();
+    }
+
+    private Set<String> collectPossibleScopes() {
+        Set<String> scopes = new HashSet<String>()
+
+        mcpTools.each { tool ->
+            scopes.add(tool.getRequiredScopes())
+        }
+    
+        return scopes
+    }
+
+    private List<McpTool> collectPublicTools() {
+        List<McpTool> tools = new ArrayList<McpTool>()
+
+        mcpTools.each { tool ->
+            if(tool.getRequiredScopes().length == 0) {
+                tools.add(tool)
+            }
+        }
+    
+        return tools
+    }
+
+    private UserAuthDetails preProcessRequest(HttpServletRequest req, HttpServletResponse resp) 
+    throws ServletException, IOException {
+
+        UserAuthDetails usrAuthDetails = new UserAuthDetails();
+
+        if (!running) {
+            resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            sendError(resp, null, -32000, "Server is shutting down");
+            return null
+        }
+
+        String authHeader = req.getHeader("Authorization");
+        StringBuilder jsonInput = new StringBuilder();
+
+        if (!authHeader) {
+            if (req.getHeader("X-Crafter-Preview") != null) {            
+                // if the user is connecting to the server via the preview server:
+                // 1. The preview token has already been validated by the time we see it here, all we need to do is validate this
+                //    is infact running in a preview server context
+                // 2. They should be given every scope required by every tool
+                logger.info("MCP client claiming be connecting to preview server");
+
+                if(previewMode) {
+                    logger.info("MCP client connecting to preview server");
+                    usrAuthDetails.userId = "Preview User"
+                    usrAuthDetails.scopes = collectPossibleScopes()
+                }
+                else {
+                    logger.warn("MCP client claiming be connecting to preview server but the server is not in preview");
+                    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                }
+            }
+            else if(allowPublicAccess) {
+                // public access to the server is allowed: 
+                // 1. Start an anonymous session
+                // 2. Give the user no scopes - they should only be able to access resource/tools etc which require no scopes.
+                logger.info("MCP client connecting to UNAUTHENTICATED preview server (this is temporary)")
+                usrAuthDetails.userId = "Temporary Anonymous User"
+                usrAuthDetails.scopes = new String[0];
+            }
+            else {
+                // the server does not allow public access (regardless if it contains tools that require no scopes)
+                // the client's request has not provided any authentication so it must be denied access.
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+
+        } else {
+            String[] userInfo = validateAccessToken(authHeader, resp);
+
+            if (userInfo == null) {
+                return null;
+            }
+
+            usrAuthDetails.userId = userInfo[0];
+            usrAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
+            
+            logger.info("Validated user: {}", userAuthDetails.userId);
+        }
+
+        return usrAuthDetails
+    }
+
+    private String[] validateAccessToken(String authHeader, HttpServletResponse resp) throws IOException {
+        return authValidator.validate(authHeader, resp)
     }
 
     void doOptionsStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -146,49 +227,22 @@ class CrafterMcpServer {
     }
 
     void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!running) {
-            resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            sendError(resp, null, -32000, "Server is shutting down");
+    
+        UserAuthDetails userDetails = preProcessRequest(req, resp);
+
+        try (BufferedReader reader = req.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonInput.append(line);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to read request body: {}", e.getMessage(), e);
+            sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
             return;
         }
 
-        String authHeader = req.getHeader("Authorization");
-        StringBuilder jsonInput = new StringBuilder();
-
-        String userId
-        String[] scopes
-
-        if (!authHeader) {
-            logger.info("MCP client connecting to UNAUTHENTICATED preview server (this is temporary)")
-            userId = "Temporary Anonymous User"
-            scopes = {"execute"}
-        } else if (authHeader.startsWith("X-Crafter-Preview")) {
-            logger.info("MCP client connecting to preview server");
-            userId = "Preview User"
-            scopes = {"execute"}
-        } else {
-            String[] userInfo = validateAccessToken(authHeader, resp);
-
-            if (userInfo == null) {
-                return;
-            }
-            userId = userInfo[0];
-            scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
-            logger.info("Validated user: {}", userId);
-
-            try (BufferedReader reader = req.getReader()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    jsonInput.append(line);
-                }
-            } catch (IOException e) {
-                logger.error("Failed to read request body: {}", e.getMessage(), e);
-                sendError(resp, null, -32600, "Invalid Request: Failed to read request body");
-                return;
-            }
-        }
-
         String jsonString = jsonInput.toString();
+
         logger.info("Received POST request: {}", jsonString);
         if (jsonString.trim().isEmpty()) {
             logger.warn("Empty request body received");
@@ -201,7 +255,9 @@ class CrafterMcpServer {
         resp.setHeader("Connection", "close");
 
         try (PrintWriter out = resp.getWriter()) {
-            JsonObject response = handleRequest(jsonString, null, userId, scopes);
+
+            JsonObject response = handleRequest(jsonString, null, userDetails.userId, userDetails.scopes);
+
             if (response == null) {
                 logger.error("handleRequest returned null for input: {}", jsonString);
                 sendError(resp, null, -32603, "Internal error: Null response from handler");
@@ -218,34 +274,8 @@ class CrafterMcpServer {
     }
 
     void doPostStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!running) {
-            resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            sendError(resp, null, -32000, "Server is shutting down");
-            return;
-        }
-
-        String authHeader = req.getHeader("Authorization");
-        String previewTokenHeader = req.getHeader("X-Crafter-Preview");
-         
-        String[] userInfo = null
-
-        if(authHeader == null && previewTokenHeader !=null) {
-
-            logger.info("MCP client connecting to preview server");
-            userInfo = "this is an admin user and these words will be scopes"
-
-        }
-        else {        
-           userInfo = validateAccessToken(authHeader, resp);
-        }
-
-        if (userInfo == null) {
-            return;
-        }
-
-        String userId = userInfo[0];
-        String[] scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
-        logger.info("Received Authorization header: {}", authHeader);
+        
+        UserAuthDetails userDetails = preProcessRequest(req, resp);
 
         String acceptHeader = req.getHeader("Accept");
         logger.info("Received Accept header: {}", acceptHeader);
@@ -312,7 +342,7 @@ class CrafterMcpServer {
         resp.setHeader("Connection", "close");
 
         try (PrintWriter out = resp.getWriter()) {
-            JsonObject response = handleRequest(jsonString, sessionId, userId, scopes);
+            JsonObject response = handleRequest(jsonString, sessionId, userDetails.userId, userDetails.scopes);
             if (response == null) {
                 logger.error("handleRequest returned null for input: {}", jsonString);
                 sendError(resp, null, -32603, "Internal error: Null response from handler");
@@ -329,21 +359,8 @@ class CrafterMcpServer {
     }
 
     void doGetStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!running) {
-            resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            logger.warn("Streaming GET request rejected: Server is shutting down");
-            return;
-        }
 
-        String authHeader = req.getHeader("Authorization");
-        String[] userInfo = validateAccessToken(authHeader, resp);
-        if (userInfo == null) {
-            return;
-        }
-        
-        String userId = userInfo[0];
-        String[] scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
-        logger.info("Validated user: {}", userId);
+        UserAuthDetails userDetails = preProcessRequest(req, resp);
 
         String existingSessionId = req.getHeader("Mcp-Session-Id");
         if (existingSessionId == null || !sessions.containsKey(existingSessionId)) {
@@ -373,95 +390,6 @@ class CrafterMcpServer {
             logger.info("Sent GET response for session {}: {}", existingSessionId, responseString);
         } catch (IOException e) {
             logger.error("IO error in streamable GET: {}", e.getMessage(), e);
-        }
-    }
-
-    private String[] validateAccessToken(String authHeader, HttpServletResponse resp) throws IOException {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            logger.warn("No valid Authorization header received");
-            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            resp.setHeader("WWW-Authenticate", "Bearer realm=\"example\", error=\"missing_token\", " +
-                "error_description=\"Authorization header missing or invalid\", " +
-                "authorization_uri=\"https://auth.example.com/oauth/authorize\", " +
-                "discovery_uri=\"https://auth.example.com/.well-known/oauth-authorization-server\"");
-            return null;
-        }
-
-        String token = authHeader.substring(7);
-        try {
-            String jwksUri = "https://auth.example.com/.well-known/jwks.json";
-            // Fetch JWKS using HttpClient
-            HttpClient client = HttpClient.newBuilder().build();
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(jwksUri))
-                .GET()
-                .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                throw new IOException("Failed to fetch JWKS: HTTP " + response.statusCode());
-            }
-            String jwksJson = response.body();
-
-            // Parse JWT to get the kid
-            JwsHeader header = Jwts.parserBuilder()
-                .build()
-                .parse(token)
-                .getHeader();
-            String kid = header.getKeyId();
-            if (kid == null) {
-                throw new JwtException("Missing key ID in JWT header");
-            }
-
-            // Parse JWKS and find the matching JWK
-            JsonObject jwks = gson.fromJson(jwksJson, JsonObject.class);
-            JsonArray keys = jwks.getAsJsonArray("keys");
-            Jwk<?> jwk = null;
-            for (JsonElement key : keys) {
-                Jwk<?> candidate = Jwks.parser().build().parse(key.toString());
-                if (kid.equals(candidate.getId())) {
-                    jwk = candidate;
-                    break;
-                }
-            }
-            if (jwk == null) {
-                throw new JwtException("No JWK found for kid: " + kid);
-            }
-
-            // Validate JWT
-            Jws<Claims> claims = Jwts.parserBuilder()
-                .setSigningKey(jwk.getKey())
-                .build()
-                .parseClaimsJws(token);
-
-            if (!claims.getBody().getAudience().contains("https://api.example.com/mcp")) {
-                logger.warn("Invalid token audience");
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.setHeader("WWW-Authenticate", "Bearer realm=\"example\", error=\"invalid_token\", " +
-                    "error_description=\"Invalid audience\"");
-                return null;
-            }
-            if (claims.getBody().getExpiration().before(new java.util.Date())) {
-                logger.warn("Token expired");
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.setHeader("WWW-Authenticate", "Bearer realm=\"example\", error=\"invalid_token\", " +
-                    "error_description=\"Token expired\"");
-                return null;
-            }
-
-            String userId = claims.getBody().getSubject();
-            String scopes = claims.getBody().get("scope", String.class);
-            return new String[]{userId, scopes};
-        } catch (JwtException | IllegalArgumentException e) {
-            logger.error("Token validation failed: {}", e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            resp.setHeader("WWW-Authenticate", "Bearer realm=\"example\", error=\"invalid_token\", " +
-                "error_description=\"Token validation failed\"");
-            return null;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error("Interrupted while fetching JWKS: {}", e.getMessage());
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            return null;
         }
     }
 
@@ -513,6 +441,8 @@ class CrafterMcpServer {
                     return handleShutdown(id);
                 case "ping":
                     return handlePing(id, sessionId);
+                case "notifications/initialized":
+                    return handleNotificationInitialized(id, sessionId);
                 default:
                     return createErrorResponse(id, -32601, "Method not found: " + method);
             }
@@ -556,6 +486,18 @@ class CrafterMcpServer {
         response.add("result", result);
 
         logger.info("Generated initialize response for session {}: {}", sessionId, gson.toJson(response));
+        return response;
+    }
+
+    private JsonObject handleNotificationInitialized(JsonElement id, String sessionId) {
+        JsonObject response = new JsonObject();
+        response.addProperty("jsonrpc", "2.0");
+        response.add("id", id);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("protocolVersion", "2025-06-18");
+
+        logger.info("Generated handleNotificationInitialized response for session {}: {}", sessionId, gson.toJson(response));
         return response;
     }
 

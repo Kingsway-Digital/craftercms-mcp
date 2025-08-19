@@ -106,6 +106,8 @@
 
   <!-- MCP Server -->
   <bean name="crafterMcpServer" class="org.craftercms.ai.mcp.server.CrafterMcpServer">
+ 		<property name="previewMode" value="${crafter.security.preview.enabled}"/>
+
     <property name="mcpTools">
       <list>
         <ref bean="toolIsIngredientAvail" />
