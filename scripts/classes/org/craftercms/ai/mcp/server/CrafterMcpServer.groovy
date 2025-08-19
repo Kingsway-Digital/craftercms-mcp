@@ -55,13 +55,14 @@ import org.craftercms.ai.mcp.server.resources.*
 import org.craftercms.ai.mcp.server.prompts.*
 import org.craftercms.ai.mcp.server.auth.*
 import org.craftercms.ai.mcp.server.auth.validator.*
+import org.craftercms.engine.service.context.SiteContext
 
 class CrafterMcpServer {
 
     private static final Logger logger = LoggerFactory.getLogger(CrafterMcpServer.class);
 
     private static final Gson gson = new Gson();
-  
+
     private String serverId;
     private volatile boolean running;
 
@@ -94,11 +95,11 @@ class CrafterMcpServer {
     private boolean allowPublicAccess
     public boolean getAllowPublicAccess() { return allowPublicAccess }
     public void setAllowPublicAccess(boolean value) { allowPublicAccess = value }
- 
+
     private AuthValidator authValidator
     public AuthValidator getAuthValidator() { return authValidator; }
     public void setAuthValidator(AuthValidator value) { authValidator = value }
-    
+
     CrafterMcpServer() {
         this.serverId = UUID.randomUUID().toString();
         this.running = true;
@@ -115,7 +116,7 @@ class CrafterMcpServer {
         mcpTools.each { tool ->
             scopes.add(tool.getRequiredScopes())
         }
-    
+
         return scopes
     }
 
@@ -127,11 +128,11 @@ class CrafterMcpServer {
                 tools.add(tool)
             }
         }
-    
+
         return tools
     }
 
-    private UserAuthDetails preProcessRequest(HttpServletRequest req, HttpServletResponse resp) 
+    private UserAuthDetails preProcessRequest(HttpServletRequest req, HttpServletResponse resp)
     throws ServletException, IOException {
 
         UserAuthDetails userAuthDetails = new UserAuthDetails();
@@ -146,7 +147,7 @@ class CrafterMcpServer {
         StringBuilder jsonInput = new StringBuilder();
 
         if (!authHeader) {
-            if (req.getHeader("X-Crafter-Preview") != null) {            
+            if (req.getHeader("X-Crafter-Preview") != null) {
                 // if the user is connecting to the server via the preview server:
                 // 1. The preview token has already been validated by the time we see it here, all we need to do is validate this
                 //    is infact running in a preview server context
@@ -164,7 +165,7 @@ class CrafterMcpServer {
                 }
             }
             else if(allowPublicAccess) {
-                // public access to the server is allowed: 
+                // public access to the server is allowed:
                 // 1. Start an anonymous session
                 // 2. Give the user no scopes - they should only be able to access resource/tools etc which require no scopes.
                 logger.info("MCP client connecting to UNAUTHENTICATED preview server (this is temporary)")
@@ -186,7 +187,7 @@ class CrafterMcpServer {
 
             userAuthDetails.userId = userInfo[0];
             userAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
-            
+
             logger.info("Validated user: {}", userAuthDetails.userId);
         }
 
@@ -227,7 +228,7 @@ class CrafterMcpServer {
     }
 
     void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    
+
         UserAuthDetails userDetails = preProcessRequest(req, resp);
 
         StringBuilder jsonInput = new StringBuilder();
@@ -276,7 +277,7 @@ class CrafterMcpServer {
     }
 
     void doPostStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        
+
         UserAuthDetails userDetails = preProcessRequest(req, resp);
 
         String acceptHeader = req.getHeader("Accept");
@@ -637,7 +638,7 @@ class CrafterMcpServer {
         for (McpTool mcpToolRecord : mcpTools) {
             JsonObject currentTool = new JsonObject();
             currentTool.addProperty("name", mcpToolRecord.getToolName());
-            currentTool.addProperty("description", mcpToolRecord.getToolDescription());
+            currentTool.addProperty("description", (String)mcpToolRecord.getToolDescription());
 
             JsonObject inputSchema = new JsonObject();
             inputSchema.addProperty("type", "object");
@@ -692,13 +693,27 @@ class CrafterMcpServer {
             // return createErrorResponse(id, -32000, "Tool authentication failed: " + toolName);
         }
 
-        List<String> callArgs = new ArrayList<>();
+        Map<String,String> callArgs = new HashMap<>()
+        String siteId = SiteContext.getCurrent().getSiteName()
+        if (toolToCall.hasProperty("siteId")) {
+            toolToCall.siteId = siteId
+        }
+
+        // Pre-populate the crafterSite param if it's shown as required, as the LLM often gets this wrong
+        if (toolToCall.getParamDescriptor("crafterSite") != null && siteId != null) {
+            callArgs.put("crafterSite", siteId)
+            arguments.addProperty("crafterSite", siteId)
+        }
+
         for (McpTool.ToolParam arg : toolToCall.getParams()) {
             if (!arguments.has(arg.name)) {
-                return createErrorResponse(id, -32602, "Missing argument: " + arg.name);
+                if (arg.isRequired()) {
+                    return createErrorResponse(id, -32602, "Missing argument: " + arg.name);
+                }
+            } else {
+                String argValue = arguments.get(arg.name).getAsString().replaceAll("\"", "");
+                callArgs.put(arg.name, argValue)
             }
-            String argValue = arguments.get(arg.name).getAsString().replaceAll("\"", "");
-            callArgs.add(argValue);
         }
         //callArgs.add(toolCredentials);
         logger.error("Temporarily not sending credentials to tool")

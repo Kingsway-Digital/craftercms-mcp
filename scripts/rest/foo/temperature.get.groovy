@@ -1,13 +1,14 @@
 def city = params.city ? params.city : ""
-def temp = "Unknown"
+def result = [:]
+result.temp = "Unknown"
 
 city = city.toLowerCase()
 
 if("new york".equals(city)) {
-    temp = "90 degrees"
+    result.temp = "90 degrees"
 }
 else if("chicago".equals(city)) {
-    temp = "45 degrees"
+    result.temp = "45 degrees"
 }
 
-return temp
+return result

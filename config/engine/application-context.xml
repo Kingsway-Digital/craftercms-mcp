@@ -4,98 +4,96 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <!-- special references -->
-  <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer" parent="crafter.properties"/>
+    <!-- special references -->
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer" parent="crafter.properties"/>
 
     <!-- My Services-->
-  <bean name="recipeService" class="foo.RecipeService" />
-  <bean name="bookingService" class="foo.BookingService" />
+    <bean name="recipeService" class="foo.RecipeService" />
+    <bean name="bookingService" class="foo.BookingService" />
 
-  <!-- Tools -->
-  <bean name="toolIsIngredientAvail" class="org.craftercms.ai.mcp.server.tools.McpToolReflect">
-    <property name="serviceObject" ref="recipeService" />
-    <property name="methodName" value="isIngredientAvailable" />
-    <property name="toolName" value="isIngredientAvailable" />
-    <property name="toolDescription" value="returns a response indicating if an ingredient is available or not" />
-    <property name="returnType" value="string" />
-    <property name="params">
-      <list>
-        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
-          <property name="name" value="ingrdient" />
-          <property name="type" value="string" />
-          <property name="description" value="The name of the ingredient to check" />
-          <property name="required" value="true" />
-        </bean>
-      </list>
-    </property>
-  </bean>
+    <!-- Tools -->
+    <bean name="toolIsIngredientAvail" class="org.craftercms.ai.mcp.server.tools.McpToolReflect">
+        <property name="serviceObject" ref="recipeService" />
+        <property name="methodName" value="isIngredientAvailable" />
+        <property name="toolName" value="isIngredientAvailable" />
+        <property name="toolDescription" value="returns a response indicating if an ingredient is available or not" />
+        <property name="returnType" value="string" />
+        <property name="params">
+            <list>
+                <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
+                    <property name="name" value="ingrdient" />
+                    <property name="type" value="string" />
+                    <property name="description" value="The name of the ingredient to check" />
+                    <property name="required" value="true" />
+                </bean>
+            </list>
+        </property>
+    </bean>
 
-  <bean name="toolGetTemperature" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
-    <property name="baseUrl" value="http://localhost:8080" />
-    <property name="url" value="/api/foo/temperature.json" />
-    <property name="toolName" value="getTemperature" />
-    <property name="toolDescription" value="Returns the temperature" />
-    <property name="returnType" value="string" />
-    <property name="previewToken" value="${ai.crafterPreviewToken}" />
-    <property name="params">
-      <list>
-        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
-          <property name="name" value="city" />
-          <property name="type" value="string" />
-          <property name="description" value="The name of the city to check" />
-          <property name="required" value="true" />
-        </bean>
-      </list>
-    </property>
-  </bean>
-
-
-  <bean name="toolGetCrafterGreeting" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
-    <property name="baseUrl" value="http://localhost:8080" />
-    <property name="url" value="/api/foo/greetings.json" />
-    <property name="toolName" value="getCrafterGreeting" />
-    <property name="toolDescription" value="Return how Crafter greets people or the world" />
-    <property name="returnType" value="string" />
-    <property name="previewToken" value="${ai.crafterPreviewToken}" />
-    <property name="params">
-      <list>
-        <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
-          <property name="name" value="greetLang" />
-          <property name="type" value="string" />
-          <property name="description" value="The language to check" />
-          <property name="required" value="true" />
-        </bean>
-      </list>
-    </property>
-  </bean>
+    <bean name="toolGetTemperature" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
+        <property name="baseUrl" value="http://localhost:8080" />
+        <property name="url" value="/api/foo/temperature.json" />
+        <property name="toolName" value="getTemperature" />
+        <property name="toolDescription" value="Returns the temperature" />
+        <property name="returnType" value="string" />
+        <property name="previewToken" value="${ai.crafterPreviewToken}" />
+        <property name="params">
+            <list>
+                <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
+                    <property name="name" value="city" />
+                    <property name="type" value="string" />
+                    <property name="description" value="The name of the city to check" />
+                    <property name="required" value="true" />
+                </bean>
+            </list>
+        </property>
+    </bean>
 
 
+    <bean name="toolGetCrafterGreeting" class="org.craftercms.ai.mcp.server.tools.McpToolRest">
+        <property name="baseUrl" value="http://localhost:8080" />
+        <property name="url" value="/api/foo/greetings.json" />
+        <property name="toolName" value="getCrafterGreeting" />
+        <property name="toolDescription" value="Return how Crafter greets people or the world" />
+        <property name="returnType" value="string" />
+        <property name="previewToken" value="${ai.crafterPreviewToken}" />
+        <property name="params">
+            <list>
+                <bean name="param1" class="org.craftercms.ai.mcp.server.tools.McpTool.ToolParam">
+                    <property name="name" value="greetLang" />
+                    <property name="type" value="string" />
+                    <property name="description" value="The language to check" />
+                    <property name="required" value="true" />
+                </bean>
+            </list>
+        </property>
+    </bean>
 
 
 
 
 
-  <!-- Resources -->
-  <bean name="resourceExample" class="org.craftercms.ai.mcp.server.resources.McpResource">
-    <property name="name" value="Example Resource" />
-    <property name="description" value="An example resource" />
-    <property name="uri" value="http://craftercms.com" />
-  </bean>
-
-  <!-- Resource Templates -->
-  <bean name="resourceTemplateExample" class="org.craftercms.ai.mcp.server.resources.McpResourceTemplate">
-    <property name="name" value="Example Resource Template" />
-    <property name="description" value="An example resource template" />
-    <property name="uriTemplate" value="http://craftercms.com/blog?id={blogId}" />
-  </bean>
-
-  <!-- Prompts -->
-  <bean name="promptExample" class="org.craftercms.ai.mcp.server.prompts.McpPrompt">
-    <property name="name" value="Example Prompt" />
-    <property name="promptTemplate" value="Hello world! What day is it?" />
-  </bean>
 
 
+    <!-- Resources -->
+    <bean name="resourceExample" class="org.craftercms.ai.mcp.server.resources.McpResource">
+        <property name="name" value="Example Resource" />
+        <property name="description" value="An example resource" />
+        <property name="uri" value="http://craftercms.com" />
+    </bean>
+
+    <!-- Resource Templates -->
+    <bean name="resourceTemplateExample" class="org.craftercms.ai.mcp.server.resources.McpResourceTemplate">
+        <property name="name" value="Example Resource Template" />
+        <property name="description" value="An example resource template" />
+        <property name="uriTemplate" value="http://craftercms.com/blog?id={blogId}" />
+    </bean>
+
+    <!-- Prompts -->
+    <bean name="promptExample" class="org.craftercms.ai.mcp.server.prompts.McpPrompt">
+        <property name="name" value="Example Prompt" />
+        <property name="promptTemplate" value="Hello world! What day is it?" />
+    </bean>
 
 
 
@@ -104,39 +102,54 @@
 
 
 
-  <!-- MCP Server -->
-  <bean name="crafterMcpServer" class="org.craftercms.ai.mcp.server.CrafterMcpServer">
- 		<property name="previewMode" value="${crafter.security.preview.enabled}"/>
 
-    <property name="mcpTools">
-      <list>
-        <ref bean="toolIsIngredientAvail" />
-        <ref bean="toolGetTemperature" />
-        <ref bean="toolGetCrafterGreeting" />
-      </list>
-    </property>
 
-    <property name="mcpResources">
-      <list>
-        <ref bean="resourceExample" />
-      </list>
-    </property>
+    <!-- MCP Server -->
+    <bean name="crafterMcpServer" class="org.craftercms.ai.mcp.server.CrafterMcpServer">
+        <property name="previewMode" value="${crafter.security.preview.enabled}"/>
+        <property name="mcpTools">
+            <list>
+                <ref bean="toolIsIngredientAvail" />
+                <ref bean="toolGetTemperature" />
+                <ref bean="toolGetCrafterGreeting" />
+            </list>
+        </property>
 
-    <property name="mcpResourceTemplates">
-      <list>
-        <ref bean="resourceTemplateExample" />
-      </list>
-    </property>
+        <property name="mcpResources">
+            <list>
+                <ref bean="resourceExample" />
+            </list>
+        </property>
 
-    <property name="mcpPrompts">
-      <list>
-        <ref bean="promptExample" />
-      </list>
-    </property>
-  </bean>  
+        <property name="mcpResourceTemplates">
+            <list>
+                <ref bean="resourceTemplateExample" />
+            </list>
+        </property>
 
-  <bean name="toolSpringBeanScanner" class="org.craftercms.ai.mcp.server.tools.ToolSpringBeanScanner" init-method="scan">
-      <property name="mcpServer" ref="crafterMcpServer" />
-  </bean>
+        <property name="mcpPrompts">
+            <list>
+                <ref bean="promptExample" />
+            </list>
+        </property>
+    </bean>
+
+    <bean name="toolSpringBeanScanner" class="org.craftercms.ai.mcp.server.tools.ToolSpringBeanScanner" init-method="scan">
+        <property name="mcpServer" ref="crafterMcpServer" />
+    </bean>
+
+    <bean name="toolOpenApiSpecParser" class="org.craftercms.ai.mcp.server.tools.ToolOpenApiSpecParser" init-method="parse">
+        <property name="baseUrl" value="http://localhost:8080" />
+        <property name="openApiSpecUrl" value="https://raw.githubusercontent.com/craftercms/engine/refs/tags/v4.4.2/src/main/api/engine-api.yaml"/>
+        <property name="mcpServer" ref="crafterMcpServer" />
+        <property name="includeTags">
+            <list>
+                <value>content</value>
+            </list>
+        </property>
+        <property name="excludeTags">
+            <list />
+        </property>
+    </bean>
 
 </beans>

@@ -1,16 +1,17 @@
 def language = params.greetLang ? params.greetLang : ""
-def resp = "Unknown"
+def result = [:]
+result.greeting = "Unknown"
 
 language = language.toLowerCase()
 
 if("english".equals(language)) {
-    resp = "Holy jumpin' geez my son, my son"
+    result.greeting = "Holy jumpin' geez my son, my son"
 }
 else if("french".equals(language)) {
-    resp = "Bonjour"
+    result.greeting = "Bonjour"
 }
 else if("spanish".equals(language)) {
-    resp = "Hola"
+    result.greeting = "Hola"
 }
 
-return resp
+return result
