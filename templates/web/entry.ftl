@@ -117,7 +117,7 @@
 
         try {
             // Replace '/api/chat' with your actual chat service endpoint
-            const response = await fetch('/api/chat/complete.json', {
+            const response = await fetch('/api/chat/complete.json?crafterSite=${siteContext.siteName}}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
