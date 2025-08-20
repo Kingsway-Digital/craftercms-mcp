@@ -144,9 +144,9 @@ def buildMcpClient(currentSiteId, previewToken, request) {
             if(modePreview) {
                 headers.set("X-Crafter-Preview", previewToken)
             }
-            else {
-                headers.set("Authorization", "Bearer: TheWheelsOnTheBusGoRoundAndRound-AndRoundAndRoundAndRoundAndRound")
-            }
+            //else {
+            //    headers.set("Authorization", "Bearer: TheWheelsOnTheBusGoRoundAndRound-AndRoundAndRoundAndRoundAndRound")
+            //}
         }
         .build()
 
