@@ -129,10 +129,10 @@ def buildOpenAiChatModel(openAIKey) {
  */
 def buildMcpClient(currentSiteId, previewToken, request) {
     def siteId = currentSiteId
-    def serverProtocol = request.getProtocol()
+    def serverScheme = request.getScheme()
     def serverName = request.getServerName()
     def serverPort = request.getServerPort()
-    def mcpServerUrl = "$serverProtocol://$serverName:$serverPort/"
+    def mcpServerUrl = "$serverScheme://$serverName:$serverPort/"
 
     def restClient = RestClient.builder()
         .baseUrl(mcpServerUrl)
