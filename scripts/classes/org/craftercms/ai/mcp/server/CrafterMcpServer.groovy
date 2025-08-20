@@ -113,6 +113,7 @@ class CrafterMcpServer {
     private Set<String> collectPossibleScopes() {
         Set<String> scopes = new HashSet<String>()
 
+logger.info("  ----> Collecting scopes")
         mcpTools.each { tool ->
             String[] toolScopes = tool.getRequiredScopes()
 
@@ -120,6 +121,7 @@ class CrafterMcpServer {
                 scopes.addAll(toolScopes);
             }
         }
+logger.info("  ----> Collecting scopes complete {}", scopes)
 
         return scopes
     }
@@ -169,8 +171,8 @@ class CrafterMcpServer {
 
                 if(previewMode) {
                     logger.info("MCP client connecting to preview server");
-                    userAuthDetails.userId = "Preview User"
-                    userAuthDetails.scopes = collectPossibleScopes()
+                    userAuthDetails.userId = "Preview User";
+                    userAuthDetails.scopes = collectPossibleScopes();
                 }
                 else {
                     logger.warn("MCP client claiming be connecting to preview server but the server is not in preview");
@@ -208,7 +210,7 @@ class CrafterMcpServer {
     }
 
     private String[] validateAccessToken(String authHeader, HttpServletResponse resp) throws IOException {
-        return collectPossibleScopes() //authValidator.validate(authHeader, resp)
+        return collectPossibleScopes(); //authValidator.validate(authHeader, resp)
     }
 
 
