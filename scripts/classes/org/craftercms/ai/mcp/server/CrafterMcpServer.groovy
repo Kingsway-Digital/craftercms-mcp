@@ -175,7 +175,7 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
                     userAuthDetails.scopes = collectPossibleScopes();
                 }
                 else {
-                    logger.warn("MCP client claiming be connecting to preview server but the server is not in preview");
+                    logger.info("MCP client claiming be connecting to preview server but the server is not in preview");
                     resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 }
             }
