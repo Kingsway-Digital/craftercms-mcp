@@ -188,7 +188,7 @@ class CrafterMcpServer {
             userAuthDetails.userId = userInfo[0];
             userAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
 
-            logger.info("Validated user: {}", userAuthDetails.userId);
+            logger.info("Validated validated Access Token Details: {} user: {}", userInfo, userAuthDetails.userId);
         }
 
         return userAuthDetails
