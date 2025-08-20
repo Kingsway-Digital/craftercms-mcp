@@ -114,7 +114,7 @@ class CrafterMcpServer {
         Set<String> scopes = new HashSet<String>()
 
         mcpTools.each { tool ->
-            scopes.add(tool.getRequiredScopes())
+            scopes.addAll(tool.getRequiredScopes())
         }
 
         return scopes
