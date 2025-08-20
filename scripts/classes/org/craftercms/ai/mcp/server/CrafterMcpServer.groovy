@@ -190,6 +190,7 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
             else {
                 // the server does not allow public access (regardless if it contains tools that require no scopes)
                 // the client's request has not provided any authentication so it must be denied access.
+                logger.info("MCP client attempt to connect annonymously but this has been disabled")
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
 
