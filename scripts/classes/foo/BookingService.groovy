@@ -14,7 +14,8 @@ public class BookingService {
     }
 
     public String[] getRequiredScopes() {
-        return new String[] { "profile", "email", "wallet" };
+        String[] hardCodedScopes = [ "profile", "email", "wallet" ];
+        return hardCodedScopes;
     }
 
 }   
