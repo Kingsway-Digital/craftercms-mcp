@@ -175,7 +175,7 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
                     userAuthDetails.scopes = collectPossibleScopes();
                 }
                 else {
-                    logger.info("MCP client claiming be connecting to preview server but the server is not in preview");
+                    logger.info("MCP client claiming be connecting to preview server but the server is not in preview mode. Rejecting Request.");
                     resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 }
             }
@@ -183,14 +183,14 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
                 // public access to the server is allowed:
                 // 1. Start an anonymous session
                 // 2. Give the user no scopes - they should only be able to access resource/tools etc which require no scopes.
-                logger.info("MCP client connecting to UNAUTHENTICATED preview server (this is temporary)")
-                userAuthDetails.userId = "Temporary Anonymous User"
+                logger.info("MCP client connecting annonymously. Public Services are enabled")
+                userAuthDetails.userId = "Anonymous User"
                 userAuthDetails.scopes = new String[0];
             }
             else {
                 // the server does not allow public access (regardless if it contains tools that require no scopes)
                 // the client's request has not provided any authentication so it must be denied access.
-                logger.info("MCP client attempt to connect annonymously but this has been disabled")
+                logger.info("MCP client attempt to connect annonymously but public services are disabled")
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
 
