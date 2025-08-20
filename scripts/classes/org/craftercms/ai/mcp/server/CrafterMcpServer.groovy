@@ -203,7 +203,7 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
             }
 
             userAuthDetails.userId = userInfo[0];
-            userAuthDetails.scopes = userInfo[1] != null ? userInfo[1].split(" ") : new String[0];
+            userAuthDetails.scopes = userInfo; //[1] != null ? userInfo[1].split(" ") : new String[0];
 
             logger.info("Validated validated Access Token Details: {} user: {}", userInfo, userAuthDetails.userId);
         }
