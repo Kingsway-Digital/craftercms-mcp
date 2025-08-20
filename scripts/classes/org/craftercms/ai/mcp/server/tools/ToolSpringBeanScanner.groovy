@@ -85,6 +85,9 @@ class ToolSpringBeanScanner implements ApplicationContextAware {
         mcpTool.toolName =  declareToolAnnotation.toolName()
         mcpTool.toolDescription = declareToolAnnotation.toolDescription()
         mcpTool.returnType = declareToolAnnotation.returnType()
+
+        String[] toolScopes = (declareToolAnnotation.scopes()) ? declareToolAnnotation.scopes().split(", ") : new String[0];
+        mcpTool.scopes = toolScopes;
         
         mcpTool.params = []
 

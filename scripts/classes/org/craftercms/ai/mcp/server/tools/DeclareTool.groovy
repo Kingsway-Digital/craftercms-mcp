@@ -8,4 +8,5 @@ public @interface DeclareTool {
     String toolName()
     String toolDescription()
     String returnType()
+    String scopes()
 }

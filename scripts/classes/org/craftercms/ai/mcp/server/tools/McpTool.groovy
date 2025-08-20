@@ -6,6 +6,7 @@ abstract class McpTool {
     String toolName
     String toolDescription
     String returnType
+    String[] scopes
     List<ToolParam> params = new ArrayList<>()
 
     static class ToolParam {
@@ -37,9 +38,9 @@ abstract class McpTool {
     }
 
     public String[] getRequiredScopes() {
-        return new String[0];
+        return scopes
     }
-    
+
     public String getAuthType() {
         // For the moment the server will only handle NONE
         // What this means is that the server asssumes that you must authenticate against it BUT once you do, tools are authenticated.

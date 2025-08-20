@@ -111,14 +111,11 @@ class CrafterMcpServer {
     }
 
     private Set<String> collectPossibleScopes() {
-        Set<String> scopes = new HashSet<String>()
+        Set<String> scopes = new HashSet<String>() 
 
         mcpTools.each { tool ->
             String[] toolScopes = tool.getRequiredScopes()
             List toolScopesList = Arrays.asList((toolScopes) ? toolScopes : new String[0]);
-
-logger.info("  ----> {} Collecting scopes {}", tool.toolName, toolScopesList)
-
             if(toolScopesList.size() > 0) {
                 scopes.addAll(toolScopesList);
             }
@@ -146,6 +143,7 @@ logger.info("  ----> Collecting scopes complete {}", scopes)
         List userScopesToCheck = Arrays.asList((userScopes) ? userScopes : new String[0]);
         List toolScopesToCheck = Arrays.asList((toolScopes) ? toolScopes : new String[0]);
 
+logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCheck)
         return toolScopesToCheck.size() == 0 || userScopesToCheck.containsAll(toolScopesToCheck);
     }
 
@@ -196,6 +194,7 @@ logger.info("  ----> Collecting scopes complete {}", scopes)
             }
 
         } else {
+            logger.info("Validating Authentication")
             String[] userInfo = validateAccessToken(authHeader, resp);
 
             if (userInfo == null) {
