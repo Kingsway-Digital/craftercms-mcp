@@ -198,6 +198,12 @@ class CrafterMcpServer {
         return collectPossibleScopes() //authValidator.validate(authHeader, resp)
     }
 
+    private boolean userScopesMatchToolScopes(String[] userScopes, String[] toolScopes) {
+        return toolScopes == null
+            || toolScopes.length == 0
+            || Arrays.asList(userScopes).containsAll(Arrays.asList(toolScopes));
+    }
+
     void doOptionsStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -394,6 +400,11 @@ class CrafterMcpServer {
         } catch (IOException e) {
             logger.error("IO error in streamable GET: {}", e.getMessage(), e);
         }
+    }
+
+    void doDeleteStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Used by Disconnect
+        // TODO: Clean up sessions
     }
 
     private JsonObject handleRequest(String jsonInput, String sessionId, String userId, String[] scopes) {
@@ -636,6 +647,7 @@ class CrafterMcpServer {
 
         JsonArray tools = new JsonArray();
         for (McpTool mcpToolRecord : mcpTools) {
+
             JsonObject currentTool = new JsonObject();
             currentTool.addProperty("name", mcpToolRecord.getToolName());
             currentTool.addProperty("description", (String)mcpToolRecord.getToolDescription());
@@ -682,16 +694,18 @@ class CrafterMcpServer {
             return createErrorResponse(id, -32602, "Invalid tool: " + toolName);
         }
 
-        if (toolToCall.getRequiredScopes() != null && !Arrays.asList(scopes).containsAll(Arrays.asList(toolToCall.getRequiredScopes()))) {
+        if(!userScopesMatchToolScopes(scopes, toolToCall.getRequiredScopes())) {
             return createErrorResponse(id, -32602, "Insufficient permissions for tool: " + toolName);
         }
 
-        CredentialTranslator translator = new CredentialTranslator();
-        String toolCredentials = translator.translateCredentials(userId, scopes, toolToCall);
-        if (toolCredentials == null) {
-            logger.error("Temporarily totally fine with no auth credentials")
-            // return createErrorResponse(id, -32000, "Tool authentication failed: " + toolName);
-        }
+        // For the moment we're not authenticating each tool. They must be authenticated when we invoke them
+
+        // CredentialTranslator translator = new CredentialTranslator();
+        // String toolCredentials = translator.translateCredentials(userId, scopes, toolToCall);
+        // if (toolCredentials == null) {
+        //     logger.error("Temporarily totally fine with no auth credentials")
+        //     // return createErrorResponse(id, -32000, "Tool authentication failed: " + toolName);
+        // }
 
         Map<String,String> callArgs = new HashMap<>()
         String siteId = SiteContext.getCurrent().getSiteName()
