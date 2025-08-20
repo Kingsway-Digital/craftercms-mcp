@@ -140,7 +140,10 @@ def buildMcpClient(currentSiteId, previewToken, request) {
             headers.set(HttpHeaders.CONTENT_TYPE, "application/json")
             headers.set(HttpHeaders.ACCEPT, "application/json")
             headers.set("X-Crafter-Site", siteId)
-            headers.set("X-Crafter-Preview", previewToken)
+
+            if(modePreview) {
+                headers.set("X-Crafter-Preview", previewToken)
+            }
         }
         .build()
 
