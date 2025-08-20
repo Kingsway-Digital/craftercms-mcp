@@ -113,12 +113,14 @@ class CrafterMcpServer {
     private Set<String> collectPossibleScopes() {
         Set<String> scopes = new HashSet<String>()
 
-logger.info("  ----> Collecting scopes")
         mcpTools.each { tool ->
             String[] toolScopes = tool.getRequiredScopes()
+            List toolScopesList = Arrays.asList((toolScopes) ? toolScopes : new String[0]);
 
-            if(toolScopes !=null && toolScopes.length > 0) {
-                scopes.addAll(toolScopes);
+logger.info("  ----> Collecting scopes {}", toolScopes)
+
+            if(toolScopesList.size() > 0) {
+                scopes.addAll(toolScopesList);
             }
         }
 logger.info("  ----> Collecting scopes complete {}", scopes)
