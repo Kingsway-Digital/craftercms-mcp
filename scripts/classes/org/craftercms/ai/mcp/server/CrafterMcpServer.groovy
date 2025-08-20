@@ -116,7 +116,7 @@ class CrafterMcpServer {
         mcpTools.each { tool ->
             String[] toolScopes = tool.getRequiredScopes()
 
-            if(toolScopes && toolScopes.length > 0) {
+            if(toolScopes !=null && toolScopes.length > 0) {
                 scopes.addAll(toolScopes);
             }
         }
