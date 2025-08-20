@@ -167,8 +167,6 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
                 // 1. The preview token has already been validated by the time we see it here, all we need to do is validate this
                 //    is infact running in a preview server context
                 // 2. They should be given every scope required by every tool
-                logger.info("MCP client claiming be connecting to preview server");
-
                 if(previewMode) {
                     logger.info("MCP client connecting to preview server");
                     userAuthDetails.userId = "Preview User";
@@ -195,7 +193,7 @@ logger.info("VALIDATEING usr: {}, vs tool {}", userScopesToCheck, toolScopesToCh
             }
 
         } else {
-            logger.info("Validating Authentication")
+            logger.info("MCP client attempting to connect with authorization. Validating user.")
             String[] userInfo = validateAccessToken(authHeader, resp);
 
             if (userInfo == null) {

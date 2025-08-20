@@ -107,7 +107,7 @@
     <!-- MCP Server -->
     <bean name="crafterMcpServer" class="org.craftercms.ai.mcp.server.CrafterMcpServer">
         <property name="previewMode" value="${crafter.security.preview.enabled:false}"/>
-        <property name="allowPublicAccess" value="true"/> <!-- we will release this with false set -->
+        <property name="allowPublicAccess" value="false"/> <!-- we will release this with false set -->
         <property name="mcpTools">
             <list>
                 <ref bean="toolIsIngredientAvail" />
