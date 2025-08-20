@@ -117,7 +117,7 @@ class CrafterMcpServer {
             String[] toolScopes = tool.getRequiredScopes()
             List toolScopesList = Arrays.asList((toolScopes) ? toolScopes : new String[0]);
 
-logger.info("  ----> Collecting scopes {}", toolScopes)
+logger.info("  ----> Collecting scopes {}", toolScopesList)
 
             if(toolScopesList.size() > 0) {
                 scopes.addAll(toolScopesList);
