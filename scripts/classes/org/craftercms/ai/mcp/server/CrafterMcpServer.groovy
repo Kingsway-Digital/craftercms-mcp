@@ -128,12 +128,21 @@ class CrafterMcpServer {
         List<McpTool> tools = new ArrayList<McpTool>()
 
         mcpTools.each { tool ->
-            if(tool.getRequiredScopes().length == 0) {
+            String[] toolScopes = tool.getRequiredScopes()
+
+            if(toolScopes != null && toolScopes.length == 0) {
                 tools.add(tool)
             }
         }
 
         return tools
+    }
+
+    private boolean userScopesMatchToolScopes(String[] userScopes, String[] toolScopes) {
+        List userScopesToCheck = Arrays.asList((userScopes) ? userScopes : new String[0]);
+        List toolScopesToCheck = Arrays.asList((toolScopes) ? toolScopes : new String[0]);
+
+        return toolScopesToCheck.size() == 0 || userScopesToCheck.containsAll(toolScopesToCheck);
     }
 
     private UserAuthDetails preProcessRequest(HttpServletRequest req, HttpServletResponse resp)
@@ -202,11 +211,7 @@ class CrafterMcpServer {
         return collectPossibleScopes() //authValidator.validate(authHeader, resp)
     }
 
-    private boolean userScopesMatchToolScopes(String[] userScopes, String[] toolScopes) {
-        return toolScopes == null
-            || toolScopes.length == 0
-            || Arrays.asList(userScopes).containsAll(Arrays.asList(toolScopes));
-    }
+
 
     void doOptionsStreaming(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setHeader("Access-Control-Allow-Origin", "*");
