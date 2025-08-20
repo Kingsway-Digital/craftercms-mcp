@@ -12,4 +12,9 @@ public class BookingService {
     public String bookFlight(String flight, String seat) {
         return "Booked"
     }
+
+    public String[] getRequiredScopes() {
+        return new String[] { "profile", "email", "wallet" };
+    }
+
 }   

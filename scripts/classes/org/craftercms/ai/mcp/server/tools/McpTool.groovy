@@ -39,6 +39,7 @@ abstract class McpTool {
     public String[] getRequiredScopes() {
         return new String[0];
     }
+    
     public String getAuthType() {
         // For the moment the server will only handle NONE
         // What this means is that the server asssumes that you must authenticate against it BUT once you do, tools are authenticated.
