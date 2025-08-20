@@ -129,7 +129,10 @@ def buildOpenAiChatModel(openAIKey) {
  */
 def buildMcpClient(currentSiteId, previewToken, request) {
     def siteId = currentSiteId
-    def mcpServerUrl = "http://localhost:8080/"
+    def serverProtocol = request.getProtocol()
+    def serverName = request.getServerName()
+    def serverPort = request.getServerPort()
+    def mcpServerUrl = "$serverProtocol://$serverName:$serverPort/"
 
     def restClient = RestClient.builder()
         .baseUrl(mcpServerUrl)
